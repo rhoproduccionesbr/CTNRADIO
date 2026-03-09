@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Función helper para verificar autenticación
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Regla general para todos los archivos (imágenes de noticias, logos, etc)
+    // Lectura: Pública (los usuarios deben poder ver las imágenes de las noticias)
+    // Escritura: Solo administradores autenticados
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}

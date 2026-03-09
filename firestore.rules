@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función helper para verificar si el usuario está logueado como administrador
+    // (Ajustar esta lógica más adelante si se crea un rol específico 'admin' en Firestore)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Colección: configuracion (URL del stream, etc)
+    // Lectura: Pública (para que cualquier visitante escuche la radio)
+    // Escritura: Solo administradores autenticados
+    match /configuracion/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Colección: noticias
+    // Lectura: Pública (cualquiera puede ver las noticias)
+    // Escritura (Crear, Actualizar, Borrar): Solo administradores autenticados
+    match /noticias/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // Colección: programacion (Grilla horaria)
+    // Lectura: Pública
+    // Escritura: Solo administradores autenticados
+    match /programacion/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
