@@ -47,7 +47,7 @@ export const AudioProvider = ({ children }) => {
 
     const audioRef = useRef(new Audio());
 
-    const FALLBACK_STREAM_URL = "https://stream.zeno.fm/8wdn606kvy8uv";
+    const FALLBACK_STREAM_URL = "https://ctnradio.vercel.app/api/stream";
 
     // 1. Cargar config de stream desde Firestore en tiempo real
     useEffect(() => {
