@@ -47,7 +47,17 @@ export const AudioProvider = ({ children }) => {
 
     const audioRef = useRef(new Audio());
 
-    const FALLBACK_STREAM_URL = "https://ctnradio.vercel.app/api/stream";
+    const FALLBACK_STREAM_URL = "/api/stream";
+
+    // Convertir URLs HTTP de AzuraCast al proxy HTTPS de Vercel
+    const toSecureUrl = (url) => {
+        if (!url) return '';
+        // Si la URL apunta al servidor AzuraCast por HTTP, usar el proxy de Vercel
+        if (url.includes('136.248.117.199')) {
+            return '/api/stream';
+        }
+        return url;
+    };
 
     // 1. Cargar config de stream desde Firestore en tiempo real
     useEffect(() => {
@@ -74,9 +84,12 @@ export const AudioProvider = ({ children }) => {
                             activeUrl = data.url;
                         }
 
-                        if (activeUrl && activeUrl !== streamUrl) {
-                            setStreamUrl(activeUrl);
-                        } else if (!activeUrl) {
+                        if (activeUrl) {
+                            const secureUrl = toSecureUrl(activeUrl);
+                            if (secureUrl !== streamUrl) {
+                                setStreamUrl(secureUrl);
+                            }
+                        } else {
                             setStreamUrl(FALLBACK_STREAM_URL);
                         }
                     } else {
