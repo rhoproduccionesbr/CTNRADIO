@@ -82,17 +82,17 @@ const Programacion = () => {
 
                 {/* Columna Formulario */}
                 <div className="lg:col-span-1">
-                    <div className="glass-card rounded-2xl p-6 border border-white/10 sticky top-4">
+                    <div className="glass-card bg-[var(--surface)] text-[var(--text-main)] rounded-2xl p-6 border border-[var(--card-border)] sticky top-4 shadow-sm">
                         <h2 className="text-xl font-bold mb-4 flex items-center">
                             {editingId ? <><Edit2 className="w-5 h-5 mr-2" /> Editar Programa</> : <><Plus className="w-5 h-5 mr-2" /> Nuevo Programa</>}
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm text-gray-400 mb-1">Día</label>
+                                <label className="block text-sm text-[var(--text-muted)] mb-1">Día</label>
                                 <select
                                     value={formData.dia} onChange={e => setFormData({ ...formData, dia: e.target.value })}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-red"
+                                    className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red"
                                 >
                                     {diasOrden.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
@@ -100,27 +100,27 @@ const Programacion = () => {
 
                             <div className="flex space-x-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm text-gray-400 mb-1">Inicio</label>
-                                    <input type="time" required value={formData.hora_inicio} onChange={e => setFormData({ ...formData, hora_inicio: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-red" />
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Inicio</label>
+                                    <input type="time" required value={formData.hora_inicio} onChange={e => setFormData({ ...formData, hora_inicio: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm text-gray-400 mb-1">Fin</label>
-                                    <input type="time" required value={formData.hora_fin} onChange={e => setFormData({ ...formData, hora_fin: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-red" />
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Fin</label>
+                                    <input type="time" required value={formData.hora_fin} onChange={e => setFormData({ ...formData, hora_fin: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm text-gray-400 mb-1">Nombre del Programa</label>
-                                <input type="text" required placeholder="Ej: Mañanas Informativas" value={formData.nombre_programa} onChange={e => setFormData({ ...formData, nombre_programa: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-red" />
+                                <label className="block text-sm text-[var(--text-muted)] mb-1">Nombre del Programa</label>
+                                <input type="text" required placeholder="Ej: Mañanas Informativas" value={formData.nombre_programa} onChange={e => setFormData({ ...formData, nombre_programa: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                             </div>
 
                             <div>
-                                <label className="block text-sm text-gray-400 mb-1">Locutor(es)</label>
-                                <input type="text" placeholder="Ej: Prof. Clemente Torales" value={formData.locutor} onChange={e => setFormData({ ...formData, locutor: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-accent-red" />
+                                <label className="block text-sm text-[var(--text-muted)] mb-1">Locutor(es)</label>
+                                <input type="text" placeholder="Ej: Prof. Clemente Torales" value={formData.locutor} onChange={e => setFormData({ ...formData, locutor: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                             </div>
 
                             <div className="flex space-x-2 pt-2">
-                                <button type="submit" disabled={saving} className="flex-1 bg-accent-red hover:bg-red-700 text-white py-2 rounded-xl font-bold transition flex justify-center items-center disabled:opacity-50">
+                                <button type="submit" disabled={saving} className="flex-1 bg-accent-red hover:bg-[#c92a35] text-[var(--primary)] py-2 rounded-xl font-bold transition flex justify-center items-center disabled:opacity-50 shadow-sm">
                                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : (editingId ? <><Save className="w-4 h-4 mr-2" /> Guardar</> : 'Añadir')}
                                 </button>
                                 {editingId && (
@@ -135,30 +135,30 @@ const Programacion = () => {
 
                 {/* Columna Lista */}
                 <div className="lg:col-span-2">
-                    <div className="glass-card rounded-2xl p-6 border border-white/10 min-h-[400px]">
+                    <div className="glass-card bg-[var(--surface)] text-[var(--text-main)] rounded-2xl p-6 border border-[var(--card-border)] min-h-[400px] shadow-sm">
                         <h2 className="text-xl font-bold mb-4">Grilla Actual</h2>
 
                         {loading ? (
-                            <div className="flex justify-center items-center h-32 text-gray-400"><Loader2 className="w-8 h-8 animate-spin" /></div>
+                            <div className="flex justify-center items-center h-32 text-[var(--text-muted)]"><Loader2 className="w-8 h-8 animate-spin" /></div>
                         ) : programas.length === 0 ? (
-                            <div className="text-center text-gray-400 py-12">No hay programas en la grilla. ¡Añade uno!</div>
+                            <div className="text-center text-[var(--text-muted)] py-12">No hay programas en la grilla. ¡Añade uno!</div>
                         ) : (
                             <div className="space-y-4">
                                 {programas.map((prog) => (
-                                    <div key={prog.id} className="bg-black/30 border border-white/5 rounded-xl p-4 flex justify-between items-center hover:bg-black/50 transition">
+                                    <div key={prog.id} className="bg-[var(--primary)] border border-[var(--card-border)] rounded-xl p-4 flex justify-between items-center hover:bg-[var(--surface)] transition shadow-sm">
                                         <div>
                                             <div className="flex items-center space-x-3 mb-1">
-                                                <span className="bg-accent-blue text-xs font-bold px-2 py-1 rounded w-20 text-center">{prog.dia}</span>
-                                                <span className="text-sm font-mono text-gray-300">{prog.hora_inicio} - {prog.hora_fin}</span>
+                                                <span className="bg-accent-blue text-xs font-bold text-white px-2 py-1 rounded w-20 text-center shadow-sm">{prog.dia}</span>
+                                                <span className="text-sm font-mono text-[var(--text-muted)]">{prog.hora_inicio} - {prog.hora_fin}</span>
                                             </div>
-                                            <h3 className="font-bold text-lg text-white">{prog.nombre_programa}</h3>
-                                            <p className="text-sm text-gray-400">{prog.locutor}</p>
+                                            <h3 className="font-bold text-lg text-[var(--text-main)]">{prog.nombre_programa}</h3>
+                                            <p className="text-sm text-[var(--text-muted)]">{prog.locutor}</p>
                                         </div>
                                         <div className="flex space-x-2">
-                                            <button onClick={() => handleEdit(prog)} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition">
+                                            <button onClick={() => handleEdit(prog)} className="p-2 text-[var(--text-muted)] hover:text-accent-blue hover:bg-accent-blue/10 rounded-lg transition">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(prog.id)} className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/40 rounded-lg transition">
+                                            <button onClick={() => handleDelete(prog.id)} className="p-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>

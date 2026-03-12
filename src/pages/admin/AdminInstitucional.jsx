@@ -57,14 +57,14 @@ const AdminInstitucional = () => {
                 Textos Institucionales
             </h1>
 
-            <div className="glass-card rounded-2xl p-6 border border-white/10 relative overflow-hidden max-w-4xl">
+            <div className="glass-card bg-[var(--surface)] text-[var(--text-main)] rounded-2xl p-6 border border-[var(--card-border)] relative overflow-hidden max-w-4xl shadow-sm">
                 {loading && (
-                    <div className="absolute inset-0 bg-primary/80 flex items-center justify-center z-10 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-10 backdrop-blur-sm">
                         <Loader2 className="w-8 h-8 animate-spin text-accent-red" />
                     </div>
                 )}
 
-                <p className="text-gray-400 mb-8 text-sm">
+                <p className="text-[var(--text-muted)] mb-8 text-sm">
                     Modifica los parámetros de Misión, Visión y el Perfil del director que se muestran en la pestaña pública "La Emisora".
                 </p>
 
@@ -77,36 +77,36 @@ const AdminInstitucional = () => {
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-bold text-gray-300 mb-2">Misión</label>
+                            <label className="block text-sm font-bold text-[var(--text-muted)] mb-2">Misión</label>
                             <textarea
                                 name="mision"
                                 value={data.mision}
                                 onChange={handleChange}
                                 rows="5"
-                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
+                                className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
                                 placeholder="Escribe la misión de la radio..."
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-300 mb-2">Visión</label>
+                            <label className="block text-sm font-bold text-[var(--text-muted)] mb-2">Visión</label>
                             <textarea
                                 name="vision"
                                 value={data.vision}
                                 onChange={handleChange}
                                 rows="5"
-                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
+                                className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
                                 placeholder="Escribe la visión de la radio..."
                             />
                         </div>
                     </div>
 
-                    <div className="border-t border-white/10 pt-6 mt-6">
+                    <div className="border-t border-[var(--card-border)] pt-6 mt-6">
                         <h3 className="text-xl font-bold mb-4">Perfil del Director</h3>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                                     Biografía / Mensaje
                                 </label>
                                 <textarea
@@ -114,13 +114,13 @@ const AdminInstitucional = () => {
                                     value={data.perfil}
                                     onChange={handleChange}
                                     rows="4"
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
+                                    className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors resize-none"
                                     placeholder="Mensaje o biografía de Clemente Torales..."
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                                     URL de Fotografía
                                 </label>
                                 <input
@@ -128,10 +128,10 @@ const AdminInstitucional = () => {
                                     name="fotoUrl"
                                     value={data.fotoUrl}
                                     onChange={handleChange}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors font-mono text-sm"
+                                    className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors font-mono text-sm"
                                     placeholder="https://ejemplo.com/foto.jpg"
                                 />
-                                <p className="text-xs text-gray-500 mt-2">Pega aquí el enlace público de la imagen del director.</p>
+                                <p className="text-xs text-[var(--text-muted)] mt-2">Pega aquí el enlace público de la imagen del director.</p>
                             </div>
                         </div>
                     </div>
@@ -139,7 +139,7 @@ const AdminInstitucional = () => {
                     <button
                         type="submit"
                         disabled={saving || loading}
-                        className="w-full md:w-auto bg-accent-red hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold transition disabled:opacity-50 shadow-lg flex items-center justify-center"
+                        className="w-full md:w-auto bg-accent-red hover:bg-[#c92a35] text-[var(--primary)] px-8 py-3 rounded-xl font-bold transition disabled:opacity-50 shadow-md flex items-center justify-center"
                     >
                         {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
                         {saving ? 'Guardando...' : 'Guardar Textos'}

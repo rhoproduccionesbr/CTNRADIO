@@ -30,7 +30,7 @@ const StickyPlayer = () => {
                         <h3 className="font-title font-bold text-sm truncate">
                             CTN Radio {programaEnVivo && <span className="text-accent-red font-normal">• {programaEnVivo}</span>}
                         </h3>
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-xs text-[var(--text-muted)] truncate">
                             {isPlaying ? 'Emisión en curso...' : 'Pausado'}
                         </p>
                     </div>
@@ -65,7 +65,7 @@ const StickyPlayer = () => {
                     )}
                     <button
                         onClick={() => setShowVolume(!showVolume)}
-                        className="text-gray-400 hover:text-white transition-colors"
+                        className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
                     >
                         {volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                     </button>

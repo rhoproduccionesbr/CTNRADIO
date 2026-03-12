@@ -113,25 +113,25 @@ const Dashboard = () => {
                 </div>
             )}
 
-            <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/10 relative overflow-hidden mb-8">
+            <div className="glass-card bg-[var(--surface)] text-[var(--text-main)] rounded-2xl p-6 md:p-8 border border-[var(--card-border)] relative overflow-hidden mb-8 shadow-sm">
                 {loading && (
-                    <div className="absolute inset-0 bg-primary/80 flex items-center justify-center z-20 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-[var(--primary)]/80 flex items-center justify-center z-20 backdrop-blur-sm">
                         <Loader2 className="w-10 h-10 animate-spin text-accent-red" />
                     </div>
                 )}
 
                 <div className="space-y-8">
                     {/* Sección 1: Programa actual (Zocalo) */}
-                    <div className="bg-black/40 p-6 rounded-xl border border-white/5">
+                    <div className="bg-[var(--primary)] p-6 rounded-xl border border-[var(--card-border)] shadow-sm">
                         <h2 className="text-xl font-bold mb-2">¿Qué está sonando ahora?</h2>
-                        <p className="text-gray-400 text-sm mb-4">Este texto aparecerá en los reproductores de la web (Hero y Sticky) aludiendo al programa actual.</p>
+                        <p className="text-[var(--text-muted)] text-sm mb-4">Este texto aparecerá en los reproductores de la web (Hero y Sticky) aludiendo al programa actual.</p>
 
                         <div>
                             <input
                                 type="text"
                                 value={config.programaEnVivo}
                                 onChange={(e) => setConfig({ ...config, programaEnVivo: e.target.value })}
-                                className="w-full bg-black/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors text-lg font-bold"
+                                className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors text-lg font-bold"
                                 placeholder="Ej: Las Mañanas con Clemente"
                             />
                         </div>
@@ -142,11 +142,11 @@ const Dashboard = () => {
                         <div className="flex justify-between items-center mb-4">
                             <div>
                                 <h2 className="text-xl font-bold">Fuentes de Audio / Enlaces Múltiples</h2>
-                                <p className="text-gray-400 text-sm">Gestiona tus servidores de radio y elige cuál emitir pulsando el círculo izquierdo.</p>
+                                <p className="text-[var(--text-muted)] text-sm">Gestiona tus servidores de radio y elige cuál emitir pulsando el círculo izquierdo.</p>
                             </div>
                             <button
                                 onClick={addStream}
-                                className="text-accent-blue hover:text-white bg-accent-blue/20 hover:bg-accent-blue/40 px-4 py-2 rounded-lg font-bold text-sm transition flex items-center"
+                                className="text-accent-blue hover:text-[var(--primary)] bg-accent-blue/20 hover:bg-accent-blue/40 px-4 py-2 rounded-lg font-bold text-sm transition flex items-center"
                             >
                                 <Plus className="w-4 h-4 mr-1" /> Añadir fuente
                             </button>
@@ -160,7 +160,7 @@ const Dashboard = () => {
                                         key={index}
                                         className={`flex flex-col md:flex-row items-center gap-4 p-4 rounded-xl border transition-all ${isActive
                                                 ? 'bg-accent-red/10 border-accent-red/50 shadow-[0_0_15px_rgba(230,24,34,0.15)]'
-                                                : 'bg-black/40 border-white/5 hover:border-white/20'
+                                                : 'bg-[var(--primary)] border-[var(--card-border)] hover:border-accent-red/30'
                                             }`}
                                     >
                                         <button
@@ -180,21 +180,21 @@ const Dashboard = () => {
                                                 type="text"
                                                 value={stream.nombre}
                                                 onChange={(e) => updateStream(index, 'nombre', e.target.value)}
-                                                className={`w-full bg-black/50 border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent-red text-sm font-bold ${isActive ? 'border-accent-red/30' : 'border-white/10'}`}
+                                                className={`w-full bg-[var(--surface)] border rounded-lg px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red text-sm font-bold ${isActive ? 'border-accent-red/30' : 'border-[var(--card-border)]'}`}
                                                 placeholder="Ej: Servidor Principal (Zeno)"
                                             />
                                             <input
                                                 type="url"
                                                 value={stream.url}
                                                 onChange={(e) => updateStream(index, 'url', e.target.value)}
-                                                className={`w-full md:col-span-2 bg-black/50 border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent-red font-mono text-sm ${isActive ? 'border-accent-red/30' : 'border-white/10'}`}
+                                                className={`w-full md:col-span-2 bg-[var(--surface)] border rounded-lg px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red font-mono text-sm ${isActive ? 'border-accent-red/30' : 'border-[var(--card-border)]'}`}
                                                 placeholder="https://stream.ejemplo.com/live"
                                             />
                                         </div>
 
                                         <button
                                             onClick={() => removeStream(index)}
-                                            className="p-2 text-gray-500 hover:text-red-400 bg-white/5 hover:bg-red-400/10 rounded-lg transition shrink-0"
+                                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition shrink-0"
                                             title="Eliminar esta fuente"
                                         >
                                             <Trash2 className="w-5 h-5" />
@@ -206,11 +206,11 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+                <div className="mt-8 pt-6 border-t border-[var(--card-border)] flex justify-end">
                     <button
                         onClick={handleSave}
                         disabled={saving || loading}
-                        className="bg-accent-red hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold transition disabled:opacity-50 shadow-lg shadow-accent-red/20 flex items-center text-lg"
+                        className="bg-accent-red hover:bg-[#c92a35] text-[var(--primary)] px-8 py-4 rounded-xl font-bold transition disabled:opacity-50 shadow-lg shadow-accent-red/20 flex items-center text-lg"
                     >
                         {saving ? <Loader2 className="w-6 h-6 animate-spin mr-3" /> : <Save className="w-6 h-6 mr-3" />}
                         {saving ? 'Aplicando cambios en la emisora...' : 'Guardar y Emitir al Público'}

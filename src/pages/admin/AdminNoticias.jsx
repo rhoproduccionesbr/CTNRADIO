@@ -141,10 +141,10 @@ const AdminNoticias = () => {
             </div>
 
             {isEditing ? (
-                <div className="glass-card rounded-2xl p-6 border border-white/10 animate-fadeIn bg-black/40">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                <div className="glass-card bg-[var(--surface)] text-[var(--text-main)] rounded-2xl p-6 border border-[var(--card-border)] animate-fadeIn shadow-sm">
+                    <div className="flex justify-between items-center mb-6 border-b border-[var(--card-border)] pb-4">
                         <h2 className="text-xl font-bold">{currentNoticia ? 'Editar Noticia' : 'Nueva Noticia'}</h2>
-                        <button onClick={resetForm} className="text-gray-400 hover:text-white transition">
+                        <button onClick={resetForm} className="text-[var(--text-muted)] hover:text-accent-red transition">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
@@ -153,35 +153,35 @@ const AdminNoticias = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-400 mb-1">Título</label>
-                                    <input required type="text" value={formData.titulo} onChange={e => setFormData({ ...formData, titulo: e.target.value })} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-white" />
+                                    <label className="block text-sm font-bold text-[var(--text-muted)] mb-1">Título</label>
+                                    <input required type="text" value={formData.titulo} onChange={e => setFormData({ ...formData, titulo: e.target.value })} className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-400 mb-1">Resumen Corto</label>
-                                    <textarea required rows="2" value={formData.resumen} onChange={e => setFormData({ ...formData, resumen: e.target.value })} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-white resize-none" />
+                                    <label className="block text-sm font-bold text-[var(--text-muted)] mb-1">Resumen Corto</label>
+                                    <textarea required rows="2" value={formData.resumen} onChange={e => setFormData({ ...formData, resumen: e.target.value })} className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] resize-none focus:outline-none focus:border-accent-red" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-400 mb-1">Autor</label>
-                                        <input type="text" value={formData.autor} onChange={e => setFormData({ ...formData, autor: e.target.value })} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-white" />
+                                        <label className="block text-sm font-bold text-[var(--text-muted)] mb-1">Autor</label>
+                                        <input type="text" value={formData.autor} onChange={e => setFormData({ ...formData, autor: e.target.value })} className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-400 mb-1">Categoría</label>
-                                        <input type="text" value={formData.categoria} onChange={e => setFormData({ ...formData, categoria: e.target.value })} placeholder="Ej. Locales, Deportes" className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-white" />
+                                        <label className="block text-sm font-bold text-[var(--text-muted)] mb-1">Categoría</label>
+                                        <input type="text" value={formData.categoria} onChange={e => setFormData({ ...formData, categoria: e.target.value })} placeholder="Ej. Locales, Deportes" className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] focus:outline-none focus:border-accent-red" />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-4 flex flex-col">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-400 mb-1">Cuerpo de la Noticia</label>
-                                    <textarea required rows="8" value={formData.contenido} onChange={e => setFormData({ ...formData, contenido: e.target.value })} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-white resize-none" placeholder="El artículo completo va aquí. Puedes usar etiquetas HTML básicas (<br>, <b>)." />
+                                    <label className="block text-sm font-bold text-[var(--text-muted)] mb-1">Cuerpo de la Noticia</label>
+                                    <textarea required rows="8" value={formData.contenido} onChange={e => setFormData({ ...formData, contenido: e.target.value })} className="w-full bg-[var(--primary)] border border-[var(--card-border)] rounded-xl px-4 py-2 text-[var(--text-main)] resize-none focus:outline-none focus:border-accent-red" placeholder="El artículo completo va aquí. Puedes usar etiquetas HTML básicas (<br>, <b>)." />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border-t border-white/10 pt-6">
-                            <label className="block text-sm font-bold text-gray-400 mb-2 flex items-center">
+                        <div className="border-t border-[var(--card-border)] pt-6">
+                            <label className="block text-sm font-bold text-[var(--text-muted)] mb-2 flex items-center">
                                 <ImageIcon className="w-4 h-4 mr-2" /> Imagen de Portada
                             </label>
                             <div className="flex items-center space-x-4">
@@ -195,7 +195,7 @@ const AdminNoticias = () => {
                                     <img src={formData.imagenUrl} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-white/20" />
                                 )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">Sube una imagen desde tu PC. Reemplazará la existente si es una edición.</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-2">Sube una imagen desde tu PC. Reemplazará la existente si es una edición.</p>
                         </div>
 
                         <div className="flex justify-end pt-4">
@@ -214,19 +214,19 @@ const AdminNoticias = () => {
                         </div>
                     ) : (
                         noticias.map((noticia) => (
-                            <div key={noticia.id} className="glass-card rounded-2xl overflow-hidden flex flex-col">
-                                <div className="h-40 bg-gray-800 relative">
+                            <div key={noticia.id} className="glass-card bg-[var(--surface)] border border-[var(--card-border)] rounded-2xl overflow-hidden flex flex-col shadow-sm">
+                                <div className="h-40 bg-[var(--primary)] relative">
                                     {noticia.imagenUrl ? (
                                         <img src={noticia.imagenUrl} alt="Portada" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-600"><ImageIcon className="w-10 h-10" /></div>
+                                        <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)]"><ImageIcon className="w-10 h-10" /></div>
                                     )}
                                 </div>
                                 <div className="p-4 flex-1">
                                     <h3 className="font-bold text-lg mb-1 line-clamp-2">{noticia.titulo}</h3>
-                                    <p className="text-gray-400 text-sm line-clamp-2 mb-4">{noticia.resumen}</p>
+                                    <p className="text-[var(--text-muted)] text-sm line-clamp-2 mb-4">{noticia.resumen}</p>
 
-                                    <div className="flex justify-end space-x-2 mt-auto pt-4 border-t border-white/5">
+                                    <div className="flex justify-end space-x-2 mt-auto pt-4 border-t border-[var(--card-border)]">
                                         <button onClick={() => handleEdit(noticia)} className="p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 rounded-lg transition" title="Editar">
                                             <Edit2 className="w-4 h-4" />
                                         </button>

@@ -45,15 +45,26 @@ export const AudioProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Audio Visualizer states
+    const [audioData, setAudioData] = useState(0);
+
     const audioRef = useRef(new Audio());
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const sourceRef = useRef(null);
+    const animationRef = useRef(null);
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
-    // Convertir URLs HTTP de AzuraCast al proxy HTTPS de Vercel
+    // Convertir URLs HTTP de AzuraCast al proxy para evitar errores de contenido mixto
     const toSecureUrl = (url) => {
         if (!url) return '';
-        // Si la URL apunta al servidor AzuraCast por HTTP, usar el proxy de Vercel
-        if (url.includes('136.248.117.199')) {
+        // Si la URL es HTTP (no segura) y estamos en una página HTTPS, usamos el proxy
+        if (url.startsWith('http://') && window.location.protocol === 'https:') {
+            return '/api/stream';
+        }
+        // Si contiene el IP y estamos en desarrollo, usamos el proxy local configurado en vite.config.js
+        if (url.includes('136.248.117.199') && (process.env.NODE_ENV === 'development' || import.meta.env.DEV)) {
             return '/api/stream';
         }
         return url;
@@ -155,15 +166,83 @@ export const AudioProvider = ({ children }) => {
         return () => clearInterval(interval);
     }, [programas, programaManual]);
 
+    // Setup Audio Context for Visualizer
+    const setupAudioContext = () => {
+        if (!audioContextRef.current) {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioContextRef.current = new AudioContextClass();
+                analyserRef.current = audioContextRef.current.createAnalyser();
+                
+                // Allow cross-origin for external streams
+                audioRef.current.crossOrigin = "anonymous";
+                
+                sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
+                sourceRef.current.connect(analyserRef.current);
+                analyserRef.current.connect(audioContextRef.current.destination);
+
+                analyserRef.current.fftSize = 256;
+            } catch (e) {
+                console.warn("AudioContext setup failed or already created:", e);
+            }
+        }
+        
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+        }
+    };
+
+    const analyzeAudio = () => {
+        if (!analyserRef.current) return;
+        
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        // Calcular el promedio de las frecuencias bajas (bajos) para causar el "pulso"
+        let sum = 0;
+        for (let i = 0; i < 10; i++) {
+            sum += dataArray[i];
+        }
+        const average = sum / 10;
+        const scale = 1 + (average / 255) * 0.2; // Escalar máximo al 120% del tamaño original
+        setAudioData(scale);
+
+        if (isPlaying) {
+            animationRef.current = requestAnimationFrame(analyzeAudio);
+        }
+    };
+
+    useEffect(() => {
+        if (isPlaying) {
+            analyzeAudio();
+        } else {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+            setAudioData(1); // Reset scale
+        }
+        return () => {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        };
+    }, [isPlaying]);
+
     // Manejar audio src y volumen dinámicamente
     useEffect(() => {
         if (streamUrl) {
             const wasPlaying = isPlaying;
-            audioRef.current.src = streamUrl;
+            
+            // Only update src if it's different to prevent resetting the stream unnecessarily
+            if (audioRef.current.src !== streamUrl && audioRef.current.src !== window.location.origin + streamUrl) {
+                audioRef.current.src = streamUrl;
+                audioRef.current.load(); // Es importante llamar a load() al cambiar el src en Safari/Chrome
+            }
+            
             audioRef.current.volume = volume;
 
             if (wasPlaying) {
-                audioRef.current.play().catch(e => console.log('Autoplay prevenido al cambiar de estación', e));
+                audioRef.current.play().catch(e => {
+                    console.log('Autoplay prevenido al cambiar de estación', e);
+                    setIsPlaying(false);
+                });
             }
         }
     }, [streamUrl]);
@@ -176,15 +255,31 @@ export const AudioProvider = ({ children }) => {
     const togglePlay = () => {
         if (!streamUrl) return;
 
+        setupAudioContext();
+
         if (isPlaying) {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
+            // Asegurarse de que el source esté cargado si fallaba
+            if (audioRef.current.readyState === 0 || audioRef.current.error) {
+               audioRef.current.load();
+            }
+
             audioRef.current.play()
-                .then(() => setIsPlaying(true))
+                .then(() => {
+                    setIsPlaying(true);
+                    setError(null);
+                })
                 .catch(err => {
                     console.error("Error al reproducir:", err);
-                    setError("Error reproduciendo el stream. Confirme la URL en el panel Admin.");
+                    // Intentar re-cargar el stream si falló por completo
+                    if (err.name === 'NotSupportedError' || err.name === 'NotAllowedError') {
+                        setError("Error de reproducción. Reintentando...");
+                        audioRef.current.load();
+                    } else {
+                        setError("Error al conectar con la radio. Revisa la señal.");
+                    }
                     setIsPlaying(false);
                 });
         }
@@ -199,7 +294,8 @@ export const AudioProvider = ({ children }) => {
             streamUrl,
             programaEnVivo,
             isLoading,
-            error
+            error,
+            audioData
         }}>
             {children}
         </AudioContext.Provider>

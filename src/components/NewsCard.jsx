@@ -28,16 +28,16 @@ const NewsCard = ({ noticia }) => {
             </div>
 
             <div className="p-6 flex flex-col flex-grow">
-                <div className="flex items-center text-gray-400 text-xs font-mono mb-3">
+                <div className="flex items-center text-[var(--text-muted)] text-xs font-mono mb-3">
                     <Calendar className="w-3 h-3 mr-2" />
                     {fechaFormat || "Fecha Reciente"}
                 </div>
 
-                <h3 className="text-xl font-bold font-title text-white mb-3 group-hover:text-accent-red transition-colors line-clamp-2">
+                <h3 className="text-xl font-bold font-title text-[var(--text-main)] mb-3 group-hover:text-accent-red transition-colors line-clamp-2">
                     {noticia.titulo}
                 </h3>
 
-                <p className="text-gray-400 text-sm mb-6 line-clamp-3">
+                <p className="text-[var(--text-muted)] text-sm mb-6 line-clamp-3">
                     {noticia.resumen}
                 </p>
 
