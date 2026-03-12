@@ -36,13 +36,13 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/stream': {
-        target: 'https://136.248.117.199/listen/ctn-radio/radio.mp3',
+        target: 'http://136.248.117.199/listen/ctn-radio/radio.mp3',
         changeOrigin: true,
         rewrite: (path) => '',
         secure: false // Ignorar problemas de certificado con el IP
       },
       '/api/nowplaying': {
-        target: 'https://136.248.117.199/api/nowplaying/ctn-radio',
+        target: 'http://136.248.117.199/api/nowplaying/ctn-radio',
         changeOrigin: true,
         rewrite: (path) => '',
         secure: false

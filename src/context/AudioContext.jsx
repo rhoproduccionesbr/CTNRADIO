@@ -56,17 +56,16 @@ export const AudioProvider = ({ children }) => {
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
-    // Convertir URLs HTTP de AzuraCast al proxy para evitar errores de contenido mixto
+    // Convertir URLs de AzuraCast al proxy para evitar errores de SSL/CORS/Mixed Content
     const toSecureUrl = (url) => {
         if (!url) return '';
-        // Si la URL es HTTP (no segura) y estamos en una página HTTPS, usamos el proxy
-        if (url.startsWith('http://') && window.location.protocol === 'https:') {
+        
+        // Si la URL contiene la IP o es HTTP, forzamos el uso del proxy /api/stream
+        // Esto es necesario tanto en Vercel (para evitar Mixed Content/SSL) como localmente
+        if (url.includes('136.248.117.199') || url.startsWith('http://')) {
             return '/api/stream';
         }
-        // Si contiene el IP y estamos en desarrollo, usamos el proxy local configurado en vite.config.js
-        if (url.includes('136.248.117.199') && (process.env.NODE_ENV === 'development' || import.meta.env.DEV)) {
-            return '/api/stream';
-        }
+        
         return url;
     };
 
