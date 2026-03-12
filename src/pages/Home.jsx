@@ -27,10 +27,8 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-64px)] w-full flex flex-col items-center justify-center p-4 md:p-6 overflow-hidden bg-primary transition-colors relative">
-            <div className="flex-1 w-full max-w-4xl flex items-center justify-center">
-                <HeroPlayer contacto={contacto} galeria={galeria} />
-            </div>
+        <div className="h-[calc(100vh-64px-72px)] w-full flex items-center justify-center p-4 overflow-hidden bg-primary transition-colors">
+            <HeroPlayer contacto={contacto} galeria={galeria} />
         </div>
     );
 };

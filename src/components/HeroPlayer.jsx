@@ -22,7 +22,7 @@ const HeroPlayer = ({ contacto, galeria }) => {
 
     return (
         <div 
-            className="w-full h-full max-w-xl mx-auto rounded-[3rem] relative overflow-hidden group shadow-2xl transition-all duration-500 flex flex-col"
+            className="w-full max-w-[380px] h-[550px] mx-auto rounded-[3rem] relative overflow-hidden group shadow-2xl transition-all duration-500 flex flex-col"
             style={{
                 boxShadow: isPlaying 
                     ? `0 0 50px -10px rgba(230, 57, 70, ${0.2 + (scale-1)*2}), 0 25px 50px -12px rgba(0, 0, 0, 0.5)` 
