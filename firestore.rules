@@ -31,5 +31,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAuthenticated();
     }
+
+    // Colección: galeria (Fotos para el reproductor)
+    // Lectura: Pública
+    // Escritura: Solo administradores autenticados
+    match /galeria/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
   }
 }

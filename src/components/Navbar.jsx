@@ -12,6 +12,7 @@ const Navbar = () => {
         { to: '/noticias', label: 'Noticias' },
         { to: '/programacion', label: 'Programación' },
         { to: '/institucional', label: 'Institucional' },
+        { to: '/galeria', label: 'Galería' },
         { to: '/contacto', label: 'Contacto', accent: true },
     ];
 

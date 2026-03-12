@@ -16,6 +16,7 @@ import AdminInstitucional from './pages/admin/AdminInstitucional';
 import AdminNoticias from './pages/admin/AdminNoticias';
 import AdminSociales from './pages/admin/AdminSociales';
 import AdminGaleria from './pages/admin/AdminGaleria';
+import GaleriaPublica from './pages/GaleriaPublica';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="contacto" element={<Contacto />} />
               <Route path="noticias" element={<NewsPortal />} />
               <Route path="noticias/:id" element={<NewsDetail />} />
+              <Route path="galeria" element={<GaleriaPublica />} />
             </Route>
 
             {/* Rutas del Panel de Administración */}
