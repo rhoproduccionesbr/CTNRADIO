@@ -10,94 +10,76 @@ const StickyPlayer = () => {
     const scale = audioData || 1;
 
     return (
-        <div 
-            className="fixed bottom-6 left-6 right-6 z-50 transition-all duration-500"
-            style={{
-                transform: `translateY(${isPlaying ? '0' : '0'})`,
-                filter: `drop-shadow(0 0 ${10 + (scale - 1) * 30}px rgba(230, 57, 70, ${0.1 + (scale - 1) * 0.4}))`
-            }}
-        >
-            <div className="max-w-5xl mx-auto bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] px-6 py-4 shadow-2xl overflow-hidden relative group">
-                {/* Reflejo de luz sutil en el borde */}
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-3 sm:px-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-8 overflow-hidden">
                 
-                <div className="flex items-center justify-between gap-4 md:gap-8 relative z-10">
-                    
-                    {/* Botón Play & Info */}
-                    <div className="flex items-center gap-4 group/info">
-                        <button
-                            onClick={togglePlay}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl relative overflow-hidden focus:outline-none ${isPlaying ? 'bg-accent-red scale-105' : 'bg-white/10 hover:bg-white/20'}`}
-                        >
-                            {isPlaying ? (
-                                <Pause className="w-6 h-6 text-white fill-current animate-in zoom-in" />
-                            ) : (
-                                <Play className="w-6 h-6 text-white fill-current ml-1 animate-in zoom-in" />
-                            )}
-                            {/* Efecto de brillo al reproducir */}
-                            {isPlaying && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
-                        </button>
+                {/* Lado Izquierdo: Control & Info */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <button
+                        onClick={togglePlay}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isPlaying ? 'bg-accent-red text-white shadow-[0_0_15px_rgba(230,57,70,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                    >
+                        {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                    </button>
 
-                        <div className="hidden sm:block">
-                            <div className="flex items-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-accent-red animate-pulse' : 'bg-white/20'}`}></span>
-                                <h3 className="font-title font-black text-[10px] tracking-[0.3em] text-white uppercase opacity-90">
-                                    CTN RADIO
-                                </h3>
-                            </div>
-                            <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest truncate max-w-[120px] md:max-w-[200px]">
-                                {programaEnVivo || 'En Vivo'}
-                            </p>
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-accent-red animate-pulse' : 'bg-white/20'}`}></span>
+                            <span className="text-[10px] font-black tracking-[0.2em] text-white/40 uppercase truncate">
+                                CTN RADIO - {isPlaying ? 'Sintonizado' : 'En Pausa'}
+                            </span>
                         </div>
+                        <h3 className="text-xs sm:text-sm font-bold text-white uppercase truncate">
+                            {programaEnVivo || 'Programación en Vivo'}
+                        </h3>
                     </div>
-
-                    {/* Waveform Central - Simulación Realista con Gradientes */}
-                    <div className="flex-1 flex items-center justify-center gap-[4px] h-10 px-4">
-                        {[...Array(24)].map((_, i) => (
-                            <div
-                                key={i}
-                                className={`w-1 rounded-full bg-gradient-to-t from-accent-red to-accent-red/40 transition-all duration-150 ${isPlaying ? 'opacity-100' : 'opacity-10 h-1'}`}
-                                style={{
-                                    height: isPlaying 
-                                        ? `${Math.max(15, (scale * (Math.abs(Math.sin((i * 0.5) + (Date.now() / 300)))) * 80))}%` 
-                                        : '3px',
-                                    transitionDelay: `${i * 10}ms`
-                                }}
-                            ></div>
-                        ))}
-                    </div>
-
-                    {/* Controles de Audio (Volumen & Más) */}
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center gap-3 bg-white/5 hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl border border-white/5 group/vol">
-                            <Volume2 className="w-4 h-4 text-white/40 group-hover/vol:text-accent-red transition-colors" />
-                            <div className="relative w-24 h-5 flex items-center">
-                                <input
-                                    type="range"
-                                    min="0" max="1" step="0.01"
-                                    value={volume}
-                                    onChange={(e) => setVolume(parseFloat(e.target.value))}
-                                    className="w-full absolute z-10 opacity-0 cursor-pointer h-full"
-                                />
-                                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-accent-red transition-all duration-75"
-                                        style={{ width: `${volume * 100}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Botón de Volumen Mobile (Toggle simple) */}
-                        <button className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-white/60">
-                             {volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                        </button>
-                    </div>
-
                 </div>
+
+                {/* Centro: Animación Bar Waveform Moderna (Visible en MD+) */}
+                <div className="hidden md:flex flex-1 items-center justify-center gap-[3px] h-8">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className={`w-1 rounded-full bg-accent-red transition-all duration-150 ${isPlaying ? 'opacity-100' : 'opacity-10 h-1'}`}
+                            style={{
+                                height: isPlaying 
+                                    ? `${Math.max(15, (scale * (Math.abs(Math.sin((i * 0.7) + (Date.now() / 250)))) * 100))}%` 
+                                    : '3px',
+                                transitionDelay: `${i * 10}ms`
+                            }}
+                        ></div>
+                    ))}
+                </div>
+
+                {/* Lado Derecho: Volumen & Logo Sutil */}
+                <div className="flex items-center gap-6 justify-end flex-1 md:flex-none">
+                    <div className="hidden sm:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5 group">
+                        <Volume2 className="w-4 h-4 text-white/30 group-hover:text-accent-red transition-colors" />
+                        <div className="relative w-24 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <input
+                                type="range"
+                                min="0" max="1" step="0.01"
+                                value={volume}
+                                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div 
+                                className="h-full bg-accent-red transition-all duration-75"
+                                style={{ width: `${volume * 100}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                    {/* Indicador Logo en Mobile/Desktop */}
+                    <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-white/5">
+                        <span className="text-[8px] font-black text-white/30 tracking-tight">CTN</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
 };
+
+
 
 export default StickyPlayer;
