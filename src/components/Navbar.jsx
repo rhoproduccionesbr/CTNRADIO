@@ -21,7 +21,7 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo simplificado */}
                     <Link to="/" className="flex items-center space-x-3 group text-2xl font-title font-extrabold hover:text-accent-red transition-colors" onClick={() => setMobileOpen(false)}>
-                        <span>CTN</span>
+                        <span>CTN - RADIO</span>
                     </Link>
 
                     {/* Enlaces de escritorio */}

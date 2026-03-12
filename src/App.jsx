@@ -15,6 +15,7 @@ import Programacion from './pages/admin/Programacion';
 import AdminInstitucional from './pages/admin/AdminInstitucional';
 import AdminNoticias from './pages/admin/AdminNoticias';
 import AdminSociales from './pages/admin/AdminSociales';
+import AdminGaleria from './pages/admin/AdminGaleria';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="institucional" element={<AdminInstitucional />} />
               <Route path="noticias" element={<AdminNoticias />} />
               <Route path="sociales" element={<AdminSociales />} />
+              <Route path="galeria" element={<AdminGaleria />} />
             </Route>
           </Routes>
         </BrowserRouter>
