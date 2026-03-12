@@ -22,7 +22,7 @@ const HeroPlayer = ({ contacto, galeria }) => {
 
     return (
         <div 
-            className="w-full max-w-lg mx-auto rounded-[2.5rem] relative overflow-hidden group shadow-2xl transition-all duration-500"
+            className="w-full max-w-lg lg:max-w-xl mx-auto rounded-[2.5rem] relative overflow-hidden group shadow-2xl transition-all duration-500 max-h-[85vh] flex flex-col aspect-[4/5] sm:aspect-auto"
             style={{
                 boxShadow: isPlaying 
                     ? `0 0 50px -10px rgba(230, 57, 70, ${0.2 + (scale-1)*2}), 0 25px 50px -12px rgba(0, 0, 0, 0.5)` 
@@ -38,7 +38,7 @@ const HeroPlayer = ({ contacto, galeria }) => {
                             alt="Galería" 
                             className="w-full h-full object-cover transition-all duration-1000 brightness-[0.7] group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
                     </>
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
@@ -48,93 +48,95 @@ const HeroPlayer = ({ contacto, galeria }) => {
                 )}
             </div>
 
-            {/* Logo en Esquina Superior Izquierda */}
-            <div className="absolute top-6 left-6 z-30">
+            {/* BARRA SUPERIOR: Logo (Izquierda) y Botón Minimalista (Derecha) */}
+            <div className="relative z-30 flex items-center justify-between p-6 w-full">
                 <img 
                     src={logoUrl} 
                     alt="CTN Logo" 
-                    className={`w-12 h-12 object-contain drop-shadow-lg transition-transform duration-700 animate-float-constant ${isPlaying ? 'brightness-110' : 'opacity-80'}`}
+                    className={`w-14 h-14 object-contain drop-shadow-lg transition-transform duration-700 animate-float-constant ${isPlaying ? 'brightness-110' : 'opacity-80'}`}
                 />
+                
+                <div className="flex items-center gap-4">
+                    {/* Indicador Visualizador Superior */}
+                    {isPlaying && (
+                        <div className="flex items-center gap-1 h-4">
+                            {[...Array(3)].map((_, i) => (
+                                <div 
+                                    key={i} 
+                                    className="w-1 bg-accent-red rounded-full"
+                                    style={{ 
+                                        height: `${40 + Math.random() * 60}%`,
+                                        animation: `pulse-soft ${0.5 + i*0.2}s ease-in-out infinite`
+                                    }}
+                                ></div>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {/* Botón Play Minimalista */}
+                    <button
+                        onClick={togglePlay}
+                        disabled={isLoading || error}
+                        className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${isPlaying ? 'border-accent-red bg-accent-red/20 text-accent-red' : 'border-white/30 bg-white/5 text-white'}`}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : isPlaying ? (
+                            <Pause className="w-6 h-6 fill-current" />
+                        ) : (
+                            <Play className="w-6 h-6 fill-current ml-0.5" />
+                        )}
+                    </button>
+                </div>
             </div>
 
-            <div className="relative z-10 flex flex-col items-center pt-20 pb-8 px-8 min-h-[450px] justify-between">
-                
-                {/* Visualizador Central o Espacio Vacío */}
-                <div className="flex-1 flex items-center justify-center w-full">
-                    {/* Botón Play/Pause con Efecto de Pulso Dinámico */}
-                    <div className="relative">
-                        {isPlaying && (
-                            <>
-                                <div 
-                                    className="absolute inset-0 bg-accent-red/40 rounded-full animate-ping opacity-50"
-                                    style={{ transform: `scale(${1 + (scale - 1) * 3})` }}
-                                ></div>
-                                <div 
-                                    className="absolute inset-0 bg-accent-red/20 rounded-full animate-pulse opacity-30"
-                                    style={{ transform: `scale(${1 + (scale - 1) * 5})` }}
-                                ></div>
-                            </>
-                        )}
-                        <button
-                            onClick={togglePlay}
-                            disabled={isLoading || error}
-                            className={`relative w-24 h-24 rounded-full bg-accent-red text-white shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none z-20 ${isPlaying ? 'shadow-accent-red/50 shadow-[0_0_30px_rgba(230,57,70,0.5)]' : ''}`}
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-10 h-10 animate-spin" />
-                            ) : isPlaying ? (
-                                <Pause className="w-12 h-12 fill-current" />
-                            ) : (
-                                <Play className="w-12 h-12 fill-current ml-2" />
-                            )}
-                        </button>
-                    </div>
-                </div>
+            {/* ESPACIO CENTRAL VACÍO (Para que la imagen sea visible) */}
+            <div className="flex-1"></div>
 
-                {/* Información en la Base */}
-                <div className="w-full flex flex-col items-center space-y-4 pt-8">
-                    <div className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                             <div className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-white/30'}`}></div>
-                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
-                                {isPlaying ? 'Sintonía en Vivo' : 'Radio en Espera'}
-                             </span>
-                        </div>
-                        <p className="text-2xl font-title font-black text-white flex items-center justify-center gap-3 tracking-tight uppercase drop-shadow-lg transition-transform duration-75"
-                           style={{ transform: isPlaying ? `scale(${1 + (scale - 1) * 0.1})` : 'scale(1)' }}>
-                            <Mic className={`w-6 h-6 text-accent-red ${isPlaying ? 'animate-pulse' : ''}`} />
-                            {programaEnVivo || 'CTN Radio Online'}
-                        </p>
+            {/* ÁREA INFERIOR: Información y Redes Sociales */}
+            <div className="relative z-10 flex flex-col items-center p-8 w-full bg-gradient-to-t from-black/90 to-transparent mt-auto">
+                <div className="text-center w-full max-w-sm mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                         <div className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-white/30'}`}></div>
+                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
+                            {isPlaying ? 'Transmitiendo en Vivo' : 'Señal en Espera'}
+                         </span>
                     </div>
 
-                    {/* Botones Sociales Sutiles */}
-                    <div className="flex items-center justify-center gap-3 w-full bg-white/5 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+                    <p className="text-2xl font-title font-black text-white flex items-center justify-center gap-3 tracking-tight uppercase drop-shadow-xl mb-4"
+                       style={{ transform: isPlaying ? `scale(${1 + (scale - 1) * 0.05})` : 'scale(1)' }}>
+                        <Mic className={`w-6 h-6 text-accent-red ${isPlaying ? 'animate-pulse' : ''}`} />
+                        <span className="truncate">{programaEnVivo || 'CTN Radio Online'}</span>
+                    </p>
+
+                    {/* Botones Sociales Estilo Cápsula */}
+                    <div className="flex items-center justify-center gap-3 w-full bg-white/5 backdrop-blur-xl rounded-2xl p-1.5 border border-white/10">
                         <a 
                             href={`https://facebook.com/${contacto?.facebook || 'ctnradio'}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 text-white/80 py-2 rounded-xl text-[11px] font-bold hover:bg-white/10 hover:text-white transition-all uppercase tracking-wider"
+                            className="flex-1 flex items-center justify-center gap-2 text-white/70 py-2.5 rounded-xl text-[10px] font-extrabold hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest"
                         >
                             <Facebook className="w-4 h-4 text-[#1877F2]" />
-                            FB
+                            Facebook
                         </a>
-                        <div className="w-px h-4 bg-white/10"></div>
+                        <div className="w-px h-5 bg-white/10"></div>
                         <a 
                             href={`https://wa.me/${contacto?.whatsapp?.replace(/[^0-9]/g, '') || ''}`}
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 text-white/80 py-2 rounded-xl text-[11px] font-bold hover:bg-white/10 hover:text-white transition-all uppercase tracking-wider"
+                            className="flex-1 flex items-center justify-center gap-2 text-white/70 py-2.5 rounded-xl text-[10px] font-extrabold hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest"
                         >
                             <MessageCircle className="w-4 h-4 text-green-500" />
-                            WA
+                            WhatsApp
                         </a>
                     </div>
                 </div>
 
-                {/* Pie de foto flotante */}
+                {/* Pie de foto minimalista */}
                 {currentPhoto?.caption && isPlaying && (
-                    <div className="absolute bottom-24 left-0 right-0 px-8 text-center pointer-events-none">
-                        <span className="px-3 py-1 bg-black/40 backdrop-blur-sm rounded-full text-[9px] text-white/50 uppercase tracking-[0.3em] border border-white/5">
+                    <div className="w-full text-center">
+                        <span className="text-[8px] text-white/30 uppercase tracking-[0.4em] font-medium">
                             {currentPhoto.caption}
                         </span>
                     </div>
