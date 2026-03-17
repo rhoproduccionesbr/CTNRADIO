@@ -4,7 +4,6 @@ import Home from './pages/Home';
 import { AudioProvider } from './context/AudioContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProgramacionGrid from './pages/ProgramacionGrid';
-import Institucional from './pages/Institucional';
 import Contacto from './pages/Contacto';
 import NewsPortal from './pages/NewsPortal';
 import NewsDetail from './pages/NewsDetail';
@@ -27,7 +26,6 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="programacion" element={<ProgramacionGrid />} />
-              <Route path="institucional" element={<Institucional />} />
               <Route path="contacto" element={<Contacto />} />
               <Route path="noticias" element={<NewsPortal />} />
               <Route path="noticias/:id" element={<NewsDetail />} />

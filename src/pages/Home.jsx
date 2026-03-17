@@ -27,7 +27,7 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-64px-72px)] w-full flex items-center justify-center p-4 overflow-hidden bg-primary transition-colors">
+        <div className="h-[calc(100vh-64px-72px)] w-full flex flex-col items-center justify-center p-4 overflow-hidden bg-primary transition-colors pb-12 sm:pb-20">
             <HeroPlayer contacto={contacto} galeria={galeria} />
         </div>
     );
