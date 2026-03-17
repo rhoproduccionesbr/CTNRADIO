@@ -10,7 +10,7 @@ const StickyPlayer = () => {
     const scale = audioData || 1;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-3 sm:px-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <div className="fixed bottom-[4rem] md:bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-3 sm:px-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-8 overflow-hidden">
                 
                 {/* Lado Izquierdo: Control & Info */}
@@ -37,18 +37,20 @@ const StickyPlayer = () => {
 
                 {/* Centro: Animación Bar Waveform Moderna (Visible en MD+) */}
                 <div className="hidden md:flex flex-1 items-center justify-center gap-[3px] h-8">
-                    {[...Array(20)].map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-1 rounded-full bg-accent-red transition-all duration-150 ${isPlaying ? 'opacity-100' : 'opacity-10 h-1'}`}
-                            style={{
-                                height: isPlaying 
-                                    ? `${Math.max(15, (scale * (Math.abs(Math.sin((i * 0.7) + (Date.now() / 250)))) * 100))}%` 
-                                    : '3px',
-                                transitionDelay: `${i * 10}ms`
-                            }}
-                        ></div>
-                    ))}
+                    {[...Array(20)].map((_, i) => {
+                        // Formula mejorada de ecualización simulada basada en scale y factores senoidales complejos
+                        const factor = isPlaying ? Math.abs(Math.sin((i * 0.8) + (Date.now() / 200)) * Math.cos((i * 0.3) - (Date.now() / 300))) : 0;
+                        const heightValue = isPlaying ? Math.max(10, (scale * 80 * factor) + (Math.random() * 20 * scale)) : 10;
+                        return (
+                            <div
+                                key={i}
+                                className={`w-1 rounded-full bg-accent-red transition-all duration-75 ${isPlaying ? 'opacity-100' : 'opacity-20'}`}
+                                style={{
+                                    height: `${heightValue}%`
+                                }}
+                            ></div>
+                        );
+                    })}
                 </div>
 
                 {/* Lado Derecho: Volumen & Logo Sutil */}

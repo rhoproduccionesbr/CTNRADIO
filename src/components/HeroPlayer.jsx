@@ -60,16 +60,17 @@ const HeroPlayer = ({ contacto, galeria }) => {
                     {/* Indicador Visualizador Superior */}
                     {isPlaying && (
                         <div className="flex items-center gap-1 h-4">
-                            {[...Array(3)].map((_, i) => (
-                                <div 
-                                    key={i} 
-                                    className="w-1 bg-accent-red rounded-full"
-                                    style={{ 
-                                        height: `${40 + Math.random() * 60}%`,
-                                        animation: `pulse-soft ${0.5 + i*0.2}s ease-in-out infinite`
-                                    }}
-                                ></div>
-                            ))}
+                            {[...Array(3)].map((_, i) => {
+                                const factor = Math.abs(Math.sin((i * 1.5) + (Date.now() / 150)));
+                                const heightValue = Math.max(30, (scale * 70 * factor) + (Math.random() * 30 * scale));
+                                return (
+                                    <div 
+                                        key={i} 
+                                        className="w-1 bg-accent-red rounded-full transition-all duration-75"
+                                        style={{ height: `${heightValue}%` }}
+                                    ></div>
+                                );
+                            })}
                         </div>
                     )}
                     

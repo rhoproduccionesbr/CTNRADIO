@@ -10,24 +10,26 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'CTN Radio',
         short_name: 'CTN Radio',
         description: 'De Guarambaré al mundo. Emisora digital 24/7 con noticias, programación y entretenimiento.',
-        theme_color: '#F8F9FA',
-        background_color: '#F8F9FA',
+        theme_color: '#0A0A0A',
+        background_color: '#0A0A0A',
         display: 'standalone',
         icons: [
           {
-            src: '/vite.svg',
+            src: '/logo.svg',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           },
           {
-            src: '/vite.svg',
+            src: '/logo.svg',
             sizes: '512x512',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
       }

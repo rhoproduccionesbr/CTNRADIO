@@ -3,10 +3,9 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Inicializar con 'light' por defecto como pidió el usuario, a menos que ya tenga uno guardado.
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
-        return savedTheme || 'light';
+        return savedTheme || 'dark';
     });
 
     useEffect(() => {
