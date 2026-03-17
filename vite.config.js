@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'pwa-icon.png', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'CTN Radio',
         short_name: 'CTN Radio',
@@ -20,15 +20,15 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/logo.svg',
+            src: '/pwa-icon.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/logo.svg',
+            src: '/pwa-icon.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
