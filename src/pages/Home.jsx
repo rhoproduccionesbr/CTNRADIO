@@ -13,11 +13,13 @@ const Home = () => {
             if (docSnap.exists()) setContacto(docSnap.data());
         });
 
-        // Suscribirse a la galería (últimas 15 fotos)
-        const qGaleria = query(collection(db, 'galeria'), orderBy('createdAt', 'desc'), limit(15));
+        // Suscribirse a la galería (filtro de carátula)
+        const qGaleria = query(collection(db, 'galeria'), orderBy('createdAt', 'desc'), limit(30));
         const unsubGaleria = onSnapshot(qGaleria, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setGaleria(items);
+            // Filtrar localmente por fotos que tengan `isCover === true`
+            const caratulas = items.filter(img => img.isCover === true);
+            setGaleria(caratulas);
         });
 
         return () => {
