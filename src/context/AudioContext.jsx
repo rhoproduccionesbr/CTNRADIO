@@ -53,6 +53,7 @@ export const AudioProvider = ({ children }) => {
     const analyserRef = useRef(null);
     const sourceRef = useRef(null);
     const animationRef = useRef(null);
+    const reconnectTimeoutRef = useRef(null);
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
@@ -283,6 +284,65 @@ export const AudioProvider = ({ children }) => {
                 });
         }
     };
+
+    // Lógica de Auto-Reconexión para resolver cortes temporales de Icecast
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handleStreamDropout = (e) => {
+            // Solo intentar reconectar si se espera que esté reproduciendo
+            if (!isPlaying || !streamUrl) return;
+
+            console.log(`Stream interrumpido (evento: ${e.type}). Intentando reconectar en 5 segundos...`);
+            setError("Reconectando señal...");
+
+            // Limpiar timeouts previos
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+
+            // Esperar 5 segundos antes de forzar reconexión para dar tiempo al switch de Icecast
+            reconnectTimeoutRef.current = setTimeout(() => {
+                if (!isPlaying || !streamUrl) return; // Verificar nuevamente después del timeout
+
+                console.log("Forzando reconexión del stream...");
+                const timestamp = new Date().getTime();
+                const separator = streamUrl.includes('?') ? '&' : '?';
+                const noCacheUrl = `${streamUrl}${separator}t=${timestamp}`;
+
+                // Recargar src para evadir caché, sin modificar streamUrl global para evitar parpadeos
+                audio.src = noCacheUrl;
+                audio.load();
+                
+                audio.play()
+                    .then(() => {
+                        console.log("Reconexión exitosa.");
+                        setError(null);
+                    })
+                    .catch(err => {
+                        console.error("Fallo al reconectar:", err);
+                        setError("Error al reconectar. Intentando de nuevo pronto...");
+                    });
+            }, 5000);
+        };
+
+        // Escuchar eventos propensos a cortes
+        audio.addEventListener('error', handleStreamDropout);
+        audio.addEventListener('ended', handleStreamDropout);
+        audio.addEventListener('stalled', handleStreamDropout);
+        audio.addEventListener('suspend', handleStreamDropout);
+
+        return () => {
+            audio.removeEventListener('error', handleStreamDropout);
+            audio.removeEventListener('ended', handleStreamDropout);
+            audio.removeEventListener('stalled', handleStreamDropout);
+            audio.removeEventListener('suspend', handleStreamDropout);
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+        };
+    }, [isPlaying, streamUrl]);
 
     return (
         <AudioContext.Provider value={{
