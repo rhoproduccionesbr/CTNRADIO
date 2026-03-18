@@ -54,6 +54,8 @@ export const AudioProvider = ({ children }) => {
     const sourceRef = useRef(null);
     const animationRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
+    const reconnectAttemptsRef = useRef(0);
+    const fadeIntervalRef = useRef(null);
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
@@ -225,21 +227,55 @@ export const AudioProvider = ({ children }) => {
         };
     }, [isPlaying]);
 
+    // Helper para Fade-In suave
+    const performFadeIn = () => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        
+        if (fadeIntervalRef.current) {
+            clearInterval(fadeIntervalRef.current);
+        }
+        
+        audio.volume = 0; // Comienza silenciado
+        let currentVol = 0;
+        const targetVol = volume;
+        
+        if (targetVol < 0.1) {
+            audio.volume = targetVol;
+            return;
+        }
+        
+        const step = targetVol / 20; 
+        fadeIntervalRef.current = setInterval(() => {
+            currentVol += step;
+            if (currentVol >= targetVol) {
+                audio.volume = targetVol;
+                clearInterval(fadeIntervalRef.current);
+                fadeIntervalRef.current = null;
+            } else {
+                audio.volume = currentVol;
+            }
+        }, 50); // ~1 segundo de transición suave
+    };
+
     // Manejar audio src y volumen dinámicamente
     useEffect(() => {
         if (streamUrl) {
             const wasPlaying = isPlaying;
             
-            // Only update src if it's different to prevent resetting the stream unnecessarily
             if (audioRef.current.src !== streamUrl && audioRef.current.src !== window.location.origin + streamUrl) {
                 audioRef.current.src = streamUrl;
-                audioRef.current.load(); // Es importante llamar a load() al cambiar el src en Safari/Chrome
+                audioRef.current.load();
             }
             
-            audioRef.current.volume = volume;
+            if (!fadeIntervalRef.current) {
+                audioRef.current.volume = volume;
+            }
 
             if (wasPlaying) {
-                audioRef.current.play().catch(e => {
+                audioRef.current.play().then(() => {
+                    performFadeIn();
+                }).catch(e => {
                     console.log('Autoplay prevenido al cambiar de estación', e);
                     setIsPlaying(false);
                 });
@@ -247,9 +283,48 @@ export const AudioProvider = ({ children }) => {
         }
     }, [streamUrl]);
 
+    // Update <audio> volume when React state changes (unless a fade in is happening)
     useEffect(() => {
-        audioRef.current.volume = volume;
+        if (!fadeIntervalRef.current) {
+            audioRef.current.volume = volume;
+        }
     }, [volume]);
+
+    // Sync React volume with native hardware volume changes (e.g. mobile volume buttons that impact web-audio natively)
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        const handleVolumeChange = () => {
+            // Evitamos un loop si el fade-in nuestro está alterando el volumen activamente
+            if (!fadeIntervalRef.current && Math.abs(audio.volume - volume) > 0.05) {
+                setVolume(audio.volume);
+            }
+        };
+        audio.addEventListener('volumechange', handleVolumeChange);
+        return () => audio.removeEventListener('volumechange', handleVolumeChange);
+    }, [volume]);
+
+    // Media Session API para pantalla de bloqueo / auto
+    useEffect(() => {
+        if ('mediaSession' in navigator && isPlaying) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: programaEnVivo || 'CTN Radio en Vivo',
+                artist: 'CTN Radio',
+                album: 'Transmisión Online',
+                artwork: [
+                    { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            // Handlers para que los botones nativos del SO sincronicen con React
+            navigator.mediaSession.setActionHandler('play', () => togglePlay());
+            navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+            navigator.mediaSession.setActionHandler('stop', () => {
+                if (isPlaying) togglePlay();
+            });
+        }
+    }, [isPlaying, programaEnVivo]);
 
     // Control de reproducción
     const togglePlay = () => {
@@ -270,6 +345,8 @@ export const AudioProvider = ({ children }) => {
                 .then(() => {
                     setIsPlaying(true);
                     setError(null);
+                    reconnectAttemptsRef.current = 0;
+                    performFadeIn();
                 })
                 .catch(err => {
                     console.error("Error al reproducir:", err);
@@ -302,11 +379,19 @@ export const AudioProvider = ({ children }) => {
                 clearTimeout(reconnectTimeoutRef.current);
             }
 
-            // Esperar 5 segundos antes de forzar reconexión para dar tiempo al switch de Icecast
+            // Retry Backoff Exponencial
+            reconnectAttemptsRef.current += 1;
+            let waitTime = 5000 * Math.pow(2, reconnectAttemptsRef.current - 1);
+            if (waitTime > 30000) waitTime = 30000; // Máximo 30 segundos de espera por intento
+
+            console.log(`Stream interrumpido (evento: ${e.type}). Intentando reconectar en ${waitTime/1000} segundos...`);
+            setError(`Reconectando señal en ${waitTime/1000}s...`);
+
+            // Esperar 'waitTime' antes de forzar reconexión para dar tiempo al switch de Icecast o recuperación paulatina
             reconnectTimeoutRef.current = setTimeout(() => {
                 if (!isPlaying || !streamUrl) return; // Verificar nuevamente después del timeout
 
-                console.log("Forzando reconexión del stream...");
+                console.log(`Forzando reconexión del stream (intento ${reconnectAttemptsRef.current})...`);
                 const timestamp = new Date().getTime();
                 const separator = streamUrl.includes('?') ? '&' : '?';
                 const noCacheUrl = `${streamUrl}${separator}t=${timestamp}`;
@@ -319,12 +404,14 @@ export const AudioProvider = ({ children }) => {
                     .then(() => {
                         console.log("Reconexión exitosa.");
                         setError(null);
+                        reconnectAttemptsRef.current = 0; // Resetear intentos de error exitosos
+                        performFadeIn();
                     })
                     .catch(err => {
                         console.error("Fallo al reconectar:", err);
-                        setError("Error al reconectar. Intentando de nuevo pronto...");
+                        setError("Error de señal. Reintentando de nuevo...");
                     });
-            }, 5000);
+            }, waitTime);
         };
 
         // Escuchar eventos propensos a cortes
