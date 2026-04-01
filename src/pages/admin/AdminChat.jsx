@@ -8,6 +8,7 @@ const AdminChat = () => {
     const [adminSecret, setAdminSecret] = useState(() => localStorage.getItem('ctn_chat_admin_secret') || '');
     const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('ctn_chat_admin_secret'));
     const [secretInput, setSecretInput] = useState('');
+    const [adminMessage, setAdminMessage] = useState('');
     
     // Auto-scroll
     const messagesEndRef = useRef(null);
@@ -46,6 +47,18 @@ const AdminChat = () => {
     const handleEmptyChat = () => {
         if (window.confirm("⚠️ PELIGRO: Esto borrará TODOS los mensajes del día actual para todos los usuarios. ¿Proceder?")) {
             chatService.adminEmpty(adminSecret);
+        }
+    };
+
+    const handleSendAdminMessage = (e) => {
+        e.preventDefault();
+        if (adminMessage.trim()) {
+            chatService.sendMessage('Equipo CTN Radio', 'Admin Panel', adminMessage.trim(), adminSecret);
+            setAdminMessage('');
+            // Scroll automatico
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         }
     };
 
@@ -155,6 +168,26 @@ const AdminChat = () => {
                         ))
                     )}
                     <div ref={messagesEndRef} />
+                </div>
+
+                {/* Zona de Envío (Admin) */}
+                <div className="p-4 border-t border-[var(--card-border)] bg-[var(--surface)]">
+                    <form onSubmit={handleSendAdminMessage} className="flex gap-2 relative">
+                        <input
+                            type="text"
+                            value={adminMessage}
+                            onChange={(e) => setAdminMessage(e.target.value)}
+                            placeholder="Escribe un anuncio oficial como Administrador..."
+                            className="flex-1 px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--card-border)] focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm font-medium"
+                        />
+                        <button 
+                            type="submit"
+                            disabled={!adminMessage.trim()}
+                            className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 disabled:opacity-50 transition-all flex items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                        >
+                            <MessageSquare className="w-4 h-4" /> Enviar
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

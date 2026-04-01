@@ -255,7 +255,7 @@ const ChatModal = ({ isOpen, onClose }) => {
                                 className={`text-xs font-title font-bold truncate max-w-[150px] ${msg.admin ? 'text-accent-red' : ''}`}
                                 style={{ color: msg.admin ? undefined : getNameColor(msg.nombre) }}
                               >
-                                {msg.admin ? `CTN RADIO` : msg.nombre}
+                                {msg.admin ? `Equipo CTN Radio` : msg.nombre}
                               </span>
                               {msg.admin && (
                                 <ShieldCheck className="w-3.5 h-3.5 text-accent-red" />
