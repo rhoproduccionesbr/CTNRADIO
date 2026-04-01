@@ -1,20 +1,16 @@
 // =============================================================================
-// CTN Radio — Chat WebSocket Service
-// Maneja la conexión WebSocket con reconexión automática
+// CTN Radio — Chat WebSocket Service (Socket.IO version)
+// Maneja la conexión con reconexión nativa de socket.io y evasión de proxies SSL
 // =============================================================================
 
-const CHAT_SERVER_URL = 'ws://136.248.117.199:3001';
+import { io } from 'socket.io-client';
+
 const CHAT_API_URL = 'http://136.248.117.199:3001/api';
-const RECONNECT_DELAY = 3000;
-const MAX_RECONNECT_DELAY = 30000;
 
 class ChatService {
   constructor() {
-    this.ws = null;
+    this.socket = null;
     this.listeners = new Set();
-    this.reconnectDelay = RECONNECT_DELAY;
-    this.reconnectTimer = null;
-    this.intentionalClose = false;
     this.isConnected = false;
   }
 
@@ -31,66 +27,45 @@ class ChatService {
     }
   }
 
-  // Conectar al servidor WebSocket
+  // Conectar al servidor WebSocket vía Proxy (Vite o Vercel)
   connect() {
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
+    if (this.socket?.connected) return;
 
     this.intentionalClose = false;
-    
-    try {
-      this.ws = new WebSocket(CHAT_SERVER_URL);
-    } catch (err) {
-      console.error('[ChatService] Error al crear WebSocket:', err);
-      this._scheduleReconnect();
-      return;
-    }
+    console.log('[ChatService] Conectando vía Vercel Proxy...');
 
-    this.ws.onopen = () => {
-      console.log('[ChatService] Conectado');
+    // Usar la ruta proxy configurada en vercel.json y vite.config.js
+    this.socket = io({
+      path: '/socket.io/',
+      // Forzar polling para evadir bloqueos de WebSocket puro sobre Edge
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+    });
+    this.socket.on('connect', () => {
+      console.log('[ChatService] Conectado exitosamente');
       this.isConnected = true;
-      this.reconnectDelay = RECONNECT_DELAY;
       this._notify({ tipo: 'estado', conectado: true });
-    };
+    });
 
-    this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        this._notify(data);
-      } catch (e) {
-        console.error('[ChatService] Error parseando mensaje:', e);
-      }
-    };
+    this.socket.on('mensaje_servidor', (data) => {
+      this._notify(data);
+    });
 
-    this.ws.onclose = () => {
-      console.log('[ChatService] Desconectado');
+    this.socket.on('disconnect', (reason) => {
+      console.log(`[ChatService] Desconectado (${reason})`);
       this.isConnected = false;
       this._notify({ tipo: 'estado', conectado: false });
-      if (!this.intentionalClose) {
-        this._scheduleReconnect();
-      }
-    };
+    });
 
-    this.ws.onerror = (err) => {
-      console.error('[ChatService] Error WS:', err);
-    };
-  }
-
-  // Reconexión automática con backoff exponencial
-  _scheduleReconnect() {
-    if (this.reconnectTimer) return;
-    console.log(`[ChatService] Reconectando en ${this.reconnectDelay / 1000}s...`);
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect();
-    }, this.reconnectDelay);
-    this.reconnectDelay = Math.min(this.reconnectDelay * 1.5, MAX_RECONNECT_DELAY);
+    this.socket.on('connect_error', (err) => {
+      console.error('[ChatService] Error WS:', err.message);
+    });
   }
 
   // Enviar un mensaje de chat
   sendMessage(nombre, localidad, texto, adminSecret = null) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.socket?.connected) {
       console.warn('[ChatService] No conectado, no se puede enviar');
       return false;
     }
@@ -101,46 +76,42 @@ class ChatService {
       texto,
     };
     if (adminSecret) payload.secret = adminSecret;
-    this.ws.send(JSON.stringify(payload));
+    this.socket.emit('mensaje_cliente', payload);
     return true;
   }
 
   // Enviar reacción a un mensaje
   sendReaction(messageId) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
-    this.ws.send(JSON.stringify({ tipo: 'reaccion', id: messageId }));
+    if (!this.socket?.connected) return false;
+    this.socket.emit('mensaje_cliente', { tipo: 'reaccion', id: messageId });
     return true;
   }
 
   // --- COMANDOS ADMIN ---
   adminDelete(messageId, secret) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
-    this.ws.send(JSON.stringify({ tipo: 'borrar_admin', id: messageId, secret }));
+    if (!this.socket?.connected) return false;
+    this.socket.emit('mensaje_cliente', { tipo: 'borrar_admin', id: messageId, secret });
     return true;
   }
 
   adminEmpty(secret) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
-    this.ws.send(JSON.stringify({ tipo: 'vaciar_admin', secret }));
+    if (!this.socket?.connected) return false;
+    this.socket.emit('mensaje_cliente', { tipo: 'vaciar_admin', secret });
     return true;
   }
 
   adminBanIp(messageId, secret) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
-    this.ws.send(JSON.stringify({ tipo: 'ban_ip', id: messageId, secret }));
+    if (!this.socket?.connected) return false;
+    this.socket.emit('mensaje_cliente', { tipo: 'ban_ip', id: messageId, secret });
     return true;
   }
 
   // Desconectar
   disconnect() {
     this.intentionalClose = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
     this.isConnected = false;
   }

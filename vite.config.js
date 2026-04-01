@@ -41,6 +41,11 @@ export default defineConfig({
         target: 'http://136.248.117.199:3001/api/oyentes',
         changeOrigin: true,
         rewrite: (path) => '',
+      },
+      '/socket.io/': {
+        target: 'http://136.248.117.199:3001',
+        changeOrigin: true,
+        ws: true,
       }
     }
   }
