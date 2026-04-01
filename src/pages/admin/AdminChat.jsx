@@ -53,7 +53,7 @@ const AdminChat = () => {
     const handleSendAdminMessage = (e) => {
         e.preventDefault();
         if (adminMessage.trim()) {
-            chatService.sendMessage('Equipo CTN Radio', 'Admin Panel', adminMessage.trim(), adminSecret);
+            chatService.sendMessage('EQUIPO CTN RADIO', '', adminMessage.trim(), adminSecret);
             setAdminMessage('');
             // Scroll automatico
             setTimeout(() => {

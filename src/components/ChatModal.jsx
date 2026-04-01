@@ -237,7 +237,7 @@ const ChatModal = ({ isOpen, onClose }) => {
                       className={`group relative flex flex-col gap-1 px-4 py-3 transition-all duration-200 shadow-sm sm:max-w-[75%] max-w-[85%] w-fit
                         ${soloEmoji ? 'bg-transparent border-none shadow-none px-1 py-1' : ''}
                         ${!soloEmoji && msg.admin 
-                          ? 'bg-accent-red border border-accent-red rounded-xl text-white' 
+                          ? 'bg-[#1e293b] dark:bg-[#1e293b] bg-opacity-10 dark:bg-opacity-80 border border-accent-red/20 text-[var(--text-main)] rounded-xl rounded-tl-sm' 
                           : !soloEmoji && isMe 
                             ? 'bg-emerald-600 border border-emerald-500 text-white rounded-xl rounded-tr-sm' 
                             : !soloEmoji 
@@ -247,18 +247,18 @@ const ChatModal = ({ isOpen, onClose }) => {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex flex-col">
                           {!isMe && (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2 mb-0.5">
                               {msg.admin && (
-                                <img src={logoUrl} alt="CTN" className="w-4 h-4 text-accent-red drop-shadow-md" />
+                                <img src={logoUrl} alt="CTN" className="w-6 h-6 drop-shadow-md" />
                               )}
                               <span 
-                                className={`text-xs font-title font-bold truncate max-w-[150px] ${msg.admin ? 'text-accent-red' : ''}`}
+                                className={`text-sm font-title font-bold truncate max-w-[150px] ${msg.admin ? 'text-accent-red' : ''}`}
                                 style={{ color: msg.admin ? undefined : getNameColor(msg.nombre) }}
                               >
-                                {msg.admin ? `Equipo CTN Radio` : msg.nombre}
+                                {msg.admin ? `EQUIPO CTN RADIO` : msg.nombre}
                               </span>
                               {msg.admin && (
-                                <ShieldCheck className="w-3.5 h-3.5 text-accent-red" />
+                                <ShieldCheck className="w-4 h-4 text-accent-red" />
                               )}
                             </div>
                           )}
