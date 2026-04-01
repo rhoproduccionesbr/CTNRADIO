@@ -9,8 +9,12 @@
             "destination": "http://136.248.117.199:3001/api/oyentes"
         },
         {
-            "source": "/socket.io/:match*",
-            "destination": "http://136.248.117.199:3001/socket.io/:match*"
+            "source": "/socket.io/(.*)",
+            "destination": "http://136.248.117.199:3001/socket.io/$1"
+        },
+        {
+            "source": "/socket.io",
+            "destination": "http://136.248.117.199:3001/socket.io/"
         },
         {
             "source": "/(.*)",
