@@ -5,6 +5,10 @@
             "destination": "http://136.248.117.199/listen/ctn-radio/radio.mp3"
         },
         {
+            "source": "/api/oyentes",
+            "destination": "http://136.248.117.199:3001/api/oyentes"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

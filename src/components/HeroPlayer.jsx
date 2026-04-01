@@ -1,11 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useAudio } from '../context/AudioContext';
-import { Play, Pause, Loader2, Mic, MessageCircle, Facebook } from 'lucide-react';
+import { useChat } from '../context/ChatContext';
+import { Play, Pause, Loader2, Mic, MessageCircle, Facebook, RadioTower } from 'lucide-react';
 import logoUrl from '../assets/logo.svg';
+import ChatModal from './ChatModal';
 
 const HeroPlayer = ({ contacto, galeria }) => {
     const { isPlaying, togglePlay, isLoading, error, programaEnVivo, audioData } = useAudio();
+    const { unreadCount, connections } = useChat();
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [listenersCount, setListenersCount] = useState(null);
+
+    // Obtener cantidad de oyentes de Icecast (AzuraCast API)
+    useEffect(() => {
+        const fetchListeners = async () => {
+            try {
+                // Usamos el proxy configurado en vite.config.js y vercel.json
+                const res = await fetch('/api/oyentes');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.listeners !== undefined) {
+                        setListenersCount(data.listeners);
+                    }
+                }
+            } catch (e) {
+                // Falla silenciosa
+            }
+        };
+
+        fetchListeners();
+        const interval = setInterval(fetchListeners, 30000); // 30 segundos
+        return () => clearInterval(interval);
+    }, []);
 
     // Rotar fotos aleatorias de la galería cada 10 segundos si está reproduciendo
     useEffect(() => {
@@ -48,13 +75,21 @@ const HeroPlayer = ({ contacto, galeria }) => {
                 )}
             </div>
 
-            {/* BARRA SUPERIOR: Logo (Izquierda) y Botón Minimalista (Derecha) */}
+            {/* BARRA SUPERIOR: Logo y Oyentes (Izquierda) y Botón Minimalista (Derecha) */}
             <div className="relative z-30 flex items-center justify-between p-6 w-full">
-                <img 
-                    src={logoUrl} 
-                    alt="CTN Logo" 
-                    className={`w-14 h-14 object-contain drop-shadow-lg transition-transform duration-700 animate-float-constant ${isPlaying ? 'brightness-110' : 'opacity-80'}`}
-                />
+                <div className="flex items-center gap-3">
+                    <img 
+                        src={logoUrl} 
+                        alt="CTN Logo" 
+                        className={`w-14 h-14 object-contain drop-shadow-lg transition-transform duration-700 animate-float-constant ${isPlaying ? 'brightness-110' : 'opacity-80'}`}
+                    />
+                    {listenersCount !== null && (
+                        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-sm transition-opacity text-white font-bold text-xs" title="Oyentes Conectados">
+                            <RadioTower className="w-4 h-4 text-emerald-400 animate-pulse" />
+                            {listenersCount}
+                        </div>
+                    )}
+                </div>
                 
                 <div className="flex items-center gap-4">
                     {/* Indicador Visualizador Superior */}
@@ -110,6 +145,20 @@ const HeroPlayer = ({ contacto, galeria }) => {
                         <span className="truncate">{programaEnVivo || 'CTN Radio Online'}</span>
                     </p>
 
+                    {/* NUEVO BOTON DE CHAT INLINE (Glassmorphism) */}
+                    <button
+                        onClick={() => setIsChatOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 mb-4 bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl font-bold py-3.5 rounded-2xl shadow-lg active:scale-[0.98] transition-all border border-white/20 relative group"
+                    >
+                        <MessageCircle className="w-5 h-5 text-accent-red group-hover:animate-pulse" />
+                        ENTRAR AL CHAT EN VIVO
+                        {unreadCount > 0 && (
+                            <span className="ml-1 bg-accent-red text-white text-[11px] font-black px-2 py-0.5 rounded-full shadow-sm animate-bounce">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
+
                     {/* Botones Sociales Estilo Cápsula */}
                     <div className="flex items-center justify-center gap-3 w-full bg-white/5 backdrop-blur-xl rounded-2xl p-1.5 border border-white/10">
                         <a 
@@ -136,13 +185,16 @@ const HeroPlayer = ({ contacto, galeria }) => {
 
                 {/* Pie de foto minimalista */}
                 {currentPhoto?.caption && isPlaying && (
-                    <div className="w-full text-center">
+                    <div className="w-full text-center mt-2">
                         <span className="text-[8px] text-white/30 uppercase tracking-[0.4em] font-medium">
                             {currentPhoto.caption}
                         </span>
                     </div>
                 )}
             </div>
+
+            {/* MODAL DEL CHAT */}
+            <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </div>
     );
 };

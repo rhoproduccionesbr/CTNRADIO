@@ -37,11 +37,10 @@ export default defineConfig({
         rewrite: (path) => '',
         secure: false // Ignorar problemas de certificado con el IP
       },
-      '/api/nowplaying': {
-        target: 'http://136.248.117.199/api/nowplaying/ctn-radio',
+      '/api/oyentes': {
+        target: 'http://136.248.117.199:3001/api/oyentes',
         changeOrigin: true,
         rewrite: (path) => '',
-        secure: false
       }
     }
   }

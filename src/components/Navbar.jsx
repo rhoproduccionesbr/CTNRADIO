@@ -1,17 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, Home, Radio, Info, Image, Phone, Newspaper, Calendar } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useChat } from '../context/ChatContext';
 
 const Navbar = () => {
     const { theme, toggleTheme } = useTheme();
+    const { unreadCount } = useChat();
     const location = useLocation();
 
     const navLinks = [
         { to: '/noticias', label: 'Noticias', icon: Newspaper },
         { to: '/programacion', label: 'Programas', icon: Calendar },
-        { to: '/', label: 'Inicio', icon: Radio }, // Radio al centro
+        { to: '/', label: 'Inicio', icon: Radio },
         { to: '/galeria', label: 'Galería', icon: Image },
-        { to: '/contacto', label: 'Nosotros', icon: Info }, // Contacto fusionado con Nosotros
+        { to: '/contacto', label: 'Nosotros', icon: Info },
     ];
 
     return (

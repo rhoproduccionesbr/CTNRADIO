@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import { AudioProvider } from './context/AudioContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ChatProvider } from './context/ChatContext';
 import ProgramacionGrid from './pages/ProgramacionGrid';
 import Contacto from './pages/Contacto';
 import NewsPortal from './pages/NewsPortal';
@@ -16,35 +17,39 @@ import AdminNoticias from './pages/admin/AdminNoticias';
 import AdminSociales from './pages/admin/AdminSociales';
 import AdminGaleria from './pages/admin/AdminGaleria';
 import GaleriaPublica from './pages/GaleriaPublica';
+import AdminChat from './pages/admin/AdminChat';
 
 function App() {
   return (
     <ThemeProvider>
-      <AudioProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="programacion" element={<ProgramacionGrid />} />
-              <Route path="contacto" element={<Contacto />} />
-              <Route path="noticias" element={<NewsPortal />} />
-              <Route path="noticias/:id" element={<NewsDetail />} />
-              <Route path="galeria" element={<GaleriaPublica />} />
-            </Route>
+      <ChatProvider>
+        <AudioProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="programacion" element={<ProgramacionGrid />} />
+                <Route path="contacto" element={<Contacto />} />
+                <Route path="noticias" element={<NewsPortal />} />
+                <Route path="noticias/:id" element={<NewsDetail />} />
+                <Route path="galeria" element={<GaleriaPublica />} />
+              </Route>
 
-            {/* Rutas del Panel de Administración */}
-            <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="programacion" element={<Programacion />} />
-              <Route path="institucional" element={<AdminInstitucional />} />
-              <Route path="noticias" element={<AdminNoticias />} />
-              <Route path="sociales" element={<AdminSociales />} />
-              <Route path="galeria" element={<AdminGaleria />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AudioProvider>
+              {/* Rutas del Panel de Administración */}
+              <Route path="/admin/login" element={<Login />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="programacion" element={<Programacion />} />
+                <Route path="institucional" element={<AdminInstitucional />} />
+                <Route path="noticias" element={<AdminNoticias />} />
+                <Route path="sociales" element={<AdminSociales />} />
+                <Route path="galeria" element={<AdminGaleria />} />
+                <Route path="chat" element={<AdminChat />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AudioProvider>
+      </ChatProvider>
     </ThemeProvider>
   );
 }

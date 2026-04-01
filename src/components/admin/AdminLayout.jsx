@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, Navigate, useNavigate, NavLink } from 'react-router-dom';
 import { auth } from '../../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { LogOut, Home, Settings, Radio, Calendar, Newspaper, Info, Link as LinkIcon, Image } from 'lucide-react';
+import { LogOut, Home, Settings, Radio, Calendar, Newspaper, Info, Link as LinkIcon, Image, MessageSquare } from 'lucide-react';
 import AdminPlayer from './AdminPlayer';
 
 const AdminLayout = () => {
@@ -76,6 +76,10 @@ const AdminLayout = () => {
                     <NavLink to="/admin/galeria" className={({ isActive }) => `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-[var(--primary)] text-accent-red font-bold shadow-sm border border-[var(--card-border)]' : 'text-[var(--text-muted)] hover:bg-[var(--card-border)] hover:text-[var(--text-main)]'}`}>
                         <Image className="w-5 h-5" />
                         <span>Galería</span>
+                    </NavLink>
+                    <NavLink to="/admin/chat" className={({ isActive }) => `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-[var(--primary)] text-accent-red font-bold shadow-sm border border-[var(--card-border)]' : 'text-[var(--text-muted)] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[var(--text-main)] border border-transparent hover:border-accent-red/20'}`}>
+                        <MessageSquare className="w-5 h-5 text-accent-red" />
+                        <span className="font-bold">Moderar Chat</span>
                     </NavLink>
                 </nav>
 
