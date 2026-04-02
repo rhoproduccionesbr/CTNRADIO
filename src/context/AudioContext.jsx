@@ -1,42 +1,36 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { db, auth } from '../services/firebase';
 import { doc, onSnapshot, collection, query, getDocs } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 
 const AudioContext = createContext(null);
 
-// Mapa de nombres de día en español (como los guarda Firestore) al índice de getDay()
 const DIAS_MAP = {
-    'Domingo': 0,
-    'Lunes': 1,
-    'Martes': 2,
-    'Miércoles': 3,
-    'Jueves': 4,
-    'Viernes': 5,
-    'Sábado': 6
+    'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3,
+    'Jueves': 4, 'Viernes': 5, 'Sábado': 6
 };
 
-/**
- * Dada la lista de programas y la fecha actual, determina cuál está al aire.
- */
 function detectarProgramaActual(programas) {
     const ahora = new Date();
-    const diaActual = ahora.getDay(); // 0=Domingo ... 6=Sábado
+    const diaActual = ahora.getDay();
     const horaActual = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0');
-
-    const encontrado = programas.find(prog => {
+    return programas.find(prog => {
         const diaPrograma = DIAS_MAP[prog.dia];
         if (diaPrograma !== diaActual) return false;
-
-        // Comparar hora: hora_inicio <= horaActual < hora_fin
         return horaActual >= prog.hora_inicio && horaActual < prog.hora_fin;
-    });
-
-    return encontrado || null;
+    }) || null;
 }
+
+// ===================================================================
+// Umbral: cuántos intentos SILENCIOSOS antes de molestar al usuario
+// ===================================================================
+const SILENT_RETRIES = 4;        // 4 intentos sin mostrar nada
+const MAX_RECONNECT_WAIT = 15000; // 15s máximo entre intentos
+const STALLED_GRACE = 6000;       // 6s de gracia antes de reconectar por stalled
 
 export const AudioProvider = ({ children }) => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(false);
     const [volume, setVolume] = useState(0.8);
     const [streamUrl, setStreamUrl] = useState('');
     const [programaEnVivo, setProgramaEnVivo] = useState('');
@@ -44,11 +38,12 @@ export const AudioProvider = ({ children }) => {
     const [programas, setProgramas] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [streamQuality, setStreamQuality] = useState('good');
 
-    // Audio Visualizer states
-    const [audioData, setAudioData] = useState(0);
+    const [audioData, setAudioData] = useState(1);
+    const [frequencyBars, setFrequencyBars] = useState(new Array(20).fill(0));
 
-    const audioRef = useRef(new Audio());
+    const audioRef = useRef(null);
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
     const sourceRef = useRef(null);
@@ -56,38 +51,45 @@ export const AudioProvider = ({ children }) => {
     const reconnectTimeoutRef = useRef(null);
     const reconnectAttemptsRef = useRef(0);
     const fadeIntervalRef = useRef(null);
+    const stalledTimeoutRef = useRef(null);
+    const intentionalPause = useRef(false);
+    const hasEverPlayed = useRef(false);
+    const bufferHealthRef = useRef(null);
+    const waitingTimerRef = useRef(null);
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
-    // Convertir URLs de AzuraCast al proxy para evitar errores de SSL/CORS/Mixed Content
+    // ===================================================================
+    // Audio element lazy init
+    // ===================================================================
+    const getAudio = useCallback(() => {
+        if (!audioRef.current) {
+            const audio = new Audio();
+            audio.preload = 'none';
+            audio.crossOrigin = 'anonymous';
+            audioRef.current = audio;
+        }
+        return audioRef.current;
+    }, []);
+
     const toSecureUrl = (url) => {
         if (!url) return '';
-        
-        // Si la URL contiene la IP o es HTTP, forzamos el uso del proxy /api/stream
-        // Esto es necesario tanto en Vercel (para evitar Mixed Content/SSL) como localmente
-        if (url.includes('136.248.117.199') || url.startsWith('http://')) {
-            return '/api/stream';
-        }
-        
+        if (url.includes('136.248.117.199') || url.startsWith('http://')) return '/api/stream';
         return url;
     };
 
-    // 1. Cargar config de stream desde Firestore en tiempo real
+    // ===================================================================
+    // 1. Config de stream desde Firestore
+    // ===================================================================
     useEffect(() => {
-        let unsub = () => { };
-
+        let unsub = () => {};
         const loadConfig = async () => {
             try {
-                await signInAnonymously(auth).catch(e => console.warn("Aviso de Auth:", e.message));
-
+                await signInAnonymously(auth).catch(() => {});
                 unsub = onSnapshot(doc(db, 'configuracion', 'stream'), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-
-                        // Guardar el nombre manual (override del admin)
                         setProgramaManual(data.programaEnVivo || '');
-
-                        // Extraer URL Activa
                         let activeUrl = '';
                         if (data.streams && Array.isArray(data.streams) && data.streams.length > 0) {
                             const index = data.streamActivoIndex || 0;
@@ -96,215 +98,326 @@ export const AudioProvider = ({ children }) => {
                         } else if (data.url) {
                             activeUrl = data.url;
                         }
-
-                        if (activeUrl) {
-                            const secureUrl = toSecureUrl(activeUrl);
-                            if (secureUrl !== streamUrl) {
-                                setStreamUrl(secureUrl);
-                            }
-                        } else {
-                            setStreamUrl(FALLBACK_STREAM_URL);
-                        }
+                        const secureUrl = activeUrl ? toSecureUrl(activeUrl) : FALLBACK_STREAM_URL;
+                        if (secureUrl !== streamUrl) setStreamUrl(secureUrl);
                     } else {
                         setStreamUrl(FALLBACK_STREAM_URL);
                     }
                     setIsLoading(false);
-                    setError(null);
-                }, (err) => {
-                    console.error("Error de permisos en Firestore.", err.message);
+                }, () => {
                     setStreamUrl(FALLBACK_STREAM_URL);
-                    setError("Aviso: Reglas bloquean lectura. Usando fallback.");
+                    setIsLoading(false);
                 });
-            } catch (err) {
-                console.error("Error general:", err);
+            } catch {
                 setStreamUrl(FALLBACK_STREAM_URL);
                 setIsLoading(false);
             }
         };
-
         loadConfig();
         return () => unsub();
     }, []);
 
-    // 2. Cargar la grilla de programación UNA VEZ
+    // ===================================================================
+    // 2. Cargar programación
+    // ===================================================================
     useEffect(() => {
-        const cargarProgramacion = async () => {
+        const cargar = async () => {
             try {
                 const snapshot = await getDocs(query(collection(db, 'programacion')));
-                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                setProgramas(data);
-            } catch (err) {
-                console.warn("No se pudo cargar la programación para detección automática:", err.message);
-            }
+                setProgramas(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            } catch {}
         };
-        cargarProgramacion();
+        cargar();
     }, []);
 
-    // 3. Cada 60 segundos, detectar qué programa está al aire
+    // ===================================================================
+    // 3. Detectar programa actual cada 60s
+    // ===================================================================
     useEffect(() => {
         const actualizar = () => {
-            // Si el admin escribió un nombre manual, ése tiene prioridad absoluta
-            if (programaManual) {
-                setProgramaEnVivo(programaManual);
-                return;
-            }
-
-            // Si no, buscar en la grilla automática
+            if (programaManual) { setProgramaEnVivo(programaManual); return; }
             if (programas.length > 0) {
                 const prog = detectarProgramaActual(programas);
-                if (prog) {
-                    setProgramaEnVivo(prog.nombre_programa);
-                } else {
-                    setProgramaEnVivo('CTN Radio en Vivo');
-                }
+                setProgramaEnVivo(prog ? prog.nombre_programa : 'CTN Radio en Vivo');
             } else {
                 setProgramaEnVivo('CTN Radio en Vivo');
             }
         };
-
-        actualizar(); // ejecutar inmediatamente
-        const interval = setInterval(actualizar, 60000); // y luego cada minuto
-
+        actualizar();
+        const interval = setInterval(actualizar, 60000);
         return () => clearInterval(interval);
     }, [programas, programaManual]);
 
-    // Setup Audio Context for Visualizer
-    const setupAudioContext = () => {
+    // ===================================================================
+    // Web Audio API — Visualizador
+    // ===================================================================
+    const setupAudioContext = useCallback(() => {
+        const audio = getAudio();
         if (!audioContextRef.current) {
             try {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                audioContextRef.current = new AudioContextClass();
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                audioContextRef.current = new Ctx();
                 analyserRef.current = audioContextRef.current.createAnalyser();
-                
-                // Allow cross-origin for external streams
-                audioRef.current.crossOrigin = "anonymous";
-                
-                sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
+                analyserRef.current.fftSize = 256;
+                analyserRef.current.smoothingTimeConstant = 0.82;
+                sourceRef.current = audioContextRef.current.createMediaElementSource(audio);
                 sourceRef.current.connect(analyserRef.current);
                 analyserRef.current.connect(audioContextRef.current.destination);
-
-                analyserRef.current.fftSize = 256;
-            } catch (e) {
-                console.warn("AudioContext setup failed or already created:", e);
-            }
+            } catch {}
         }
-        
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
-        }
-    };
+        if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
+    }, [getAudio]);
 
-    const analyzeAudio = () => {
+    const analyzeAudio = useCallback(() => {
         if (!analyserRef.current) return;
-        
         const bufferLength = analyserRef.current.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        // Calcular el promedio de las frecuencias bajas (bajos) para causar el "pulso"
-        let sum = 0;
-        for (let i = 0; i < 10; i++) {
-            sum += dataArray[i];
-        }
-        const average = sum / 10;
-        const scale = 1 + (average / 255) * 0.2; // Escalar máximo al 120% del tamaño original
-        setAudioData(scale);
+        let bassSum = 0;
+        for (let i = 0; i < 10; i++) bassSum += dataArray[i];
+        setAudioData(1 + (bassSum / 10 / 255) * 0.2);
 
-        if (isPlaying) {
-            animationRef.current = requestAnimationFrame(analyzeAudio);
+        const barCount = 20;
+        const barsPerGroup = Math.floor(bufferLength / barCount);
+        const newBars = new Array(barCount);
+        for (let i = 0; i < barCount; i++) {
+            let sum = 0;
+            for (let j = 0; j < barsPerGroup; j++) sum += dataArray[i * barsPerGroup + j];
+            newBars[i] = Math.max(5, (sum / barsPerGroup / 255) * 100);
         }
-    };
+        setFrequencyBars(newBars);
+        animationRef.current = requestAnimationFrame(analyzeAudio);
+    }, []);
 
     useEffect(() => {
-        if (isPlaying) {
+        if (isPlaying && !isBuffering) {
             analyzeAudio();
         } else {
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
-            setAudioData(1); // Reset scale
+            if (!isPlaying) { setAudioData(1); setFrequencyBars(new Array(20).fill(0)); }
         }
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
-        };
-    }, [isPlaying]);
+        return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+    }, [isPlaying, isBuffering, analyzeAudio]);
 
-    // Helper para Fade-In suave
-    const performFadeIn = () => {
-        const audio = audioRef.current;
+    // ===================================================================
+    // Fade-in logarítmico
+    // ===================================================================
+    const performFadeIn = useCallback(() => {
+        const audio = getAudio();
         if (!audio) return;
-        
-        if (fadeIntervalRef.current) {
-            clearInterval(fadeIntervalRef.current);
-        }
-        
-        audio.volume = 0; // Comienza silenciado
-        let currentVol = 0;
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+
+        audio.volume = 0;
         const targetVol = volume;
-        
-        if (targetVol < 0.1) {
-            audio.volume = targetVol;
-            return;
-        }
-        
-        const step = targetVol / 20; 
+        if (targetVol < 0.05) { audio.volume = targetVol; return; }
+
+        let progress = 0;
+        const totalSteps = 20;
         fadeIntervalRef.current = setInterval(() => {
-            currentVol += step;
-            if (currentVol >= targetVol) {
+            progress++;
+            const fraction = progress / totalSteps;
+            if (progress >= totalSteps) {
                 audio.volume = targetVol;
                 clearInterval(fadeIntervalRef.current);
                 fadeIntervalRef.current = null;
             } else {
-                audio.volume = currentVol;
+                audio.volume = Math.min(targetVol * Math.pow(fraction, 2), targetVol);
             }
-        }, 50); // ~1 segundo de transición suave
-    };
+        }, 40);
+    }, [volume, getAudio]);
 
-    // Manejar audio src y volumen dinámicamente
-    useEffect(() => {
-        if (streamUrl) {
-            const wasPlaying = isPlaying;
-            
-            if (audioRef.current.src !== streamUrl && audioRef.current.src !== window.location.origin + streamUrl) {
-                audioRef.current.src = streamUrl;
-                audioRef.current.load();
-            }
-            
-            if (!fadeIntervalRef.current) {
-                audioRef.current.volume = volume;
-            }
+    // ===================================================================
+    // RECONEXIÓN SILENCIOSA
+    // Los primeros N intentos son 100% invisibles para el usuario.
+    // Solo tras SILENT_RETRIES fallos se muestra feedback.
+    // ===================================================================
+    const attemptReconnect = useCallback((reason, waitMs) => {
+        const audio = getAudio();
+        if (!audio || !streamUrl || intentionalPause.current) return;
 
-            if (wasPlaying) {
-                audioRef.current.play().then(() => {
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+
+        reconnectAttemptsRef.current += 1;
+        const attempt = reconnectAttemptsRef.current;
+        const isSilent = attempt <= SILENT_RETRIES;
+
+        console.log(`[CTN Audio] Reconectando (${reason}) — intento ${attempt}${isSilent ? ' [silencioso]' : ''}, espera ${waitMs}ms`);
+
+        // Solo mostrar UI de reconexión DESPUÉS de agotar intentos silenciosos
+        if (!isSilent) {
+            setStreamQuality('reconnecting');
+            setIsBuffering(true);
+            setError(`Reconectando señal (intento ${attempt - SILENT_RETRIES})...`);
+        }
+        // Intentos silenciosos: no cambiar nada en la UI
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+            if (intentionalPause.current || !isPlaying) return;
+
+            const timestamp = Date.now();
+            const separator = streamUrl.includes('?') ? '&' : '?';
+            audio.src = `${streamUrl}${separator}_t=${timestamp}`;
+            audio.load();
+
+            audio.play()
+                .then(() => {
+                    console.log(`[CTN Audio] ✅ Reconexión exitosa (intento ${attempt})`);
+                    setError(null);
+                    setStreamQuality('good');
+                    setIsBuffering(false);
+                    reconnectAttemptsRef.current = 0;
                     performFadeIn();
-                }).catch(e => {
-                    console.log('Autoplay prevenido al cambiar de estación', e);
+                })
+                .catch(() => {
+                    const nextWait = Math.min(waitMs * 1.4, MAX_RECONNECT_WAIT);
+
+                    // Si ya superó los silenciosos, mostrar cuenta regresiva
+                    if (!isSilent) {
+                        setError(`Reintentando en ${Math.round(nextWait / 1000)}s...`);
+                        setStreamQuality('weak');
+                    }
+
+                    // Seguir reintentando automáticamente
+                    attemptReconnect(reason, nextWait);
+                });
+        }, waitMs);
+    }, [streamUrl, isPlaying, getAudio, performFadeIn]);
+
+    // ===================================================================
+    // Event listeners del audio element
+    // ===================================================================
+    useEffect(() => {
+        const audio = getAudio();
+
+        // --- Buffering: solo mostrar si dura > 2 segundos ---
+        // Micro-buffers normales no molestan al usuario
+        const onWaiting = () => {
+            if (!isPlaying || intentionalPause.current) return;
+            // Esperar 2s antes de mostrar indicador de buffering
+            if (waitingTimerRef.current) clearTimeout(waitingTimerRef.current);
+            waitingTimerRef.current = setTimeout(() => {
+                if (isPlaying && !intentionalPause.current) {
+                    setIsBuffering(true);
+                }
+            }, 2000);
+        };
+
+        const onCanPlay = () => {
+            if (waitingTimerRef.current) { clearTimeout(waitingTimerRef.current); waitingTimerRef.current = null; }
+            setIsBuffering(false);
+            if (isPlaying) setStreamQuality('good');
+        };
+
+        const onPlaying = () => {
+            if (waitingTimerRef.current) { clearTimeout(waitingTimerRef.current); waitingTimerRef.current = null; }
+            setIsBuffering(false);
+            setStreamQuality('good');
+            setError(null);
+        };
+
+        // --- Error de red/stream ---
+        const onError = () => {
+            if (!isPlaying || intentionalPause.current) return;
+            attemptReconnect('error', 2000);
+        };
+
+        // --- AutoDJ → Live switch ---
+        const onEnded = () => {
+            if (!isPlaying || intentionalPause.current) return;
+            attemptReconnect('autodj-switch', 1200);
+        };
+
+        // --- Stalled: datos dejaron de llegar ---
+        const onStalled = () => {
+            if (!isPlaying || intentionalPause.current) return;
+            if (stalledTimeoutRef.current) clearTimeout(stalledTimeoutRef.current);
+            stalledTimeoutRef.current = setTimeout(() => {
+                if (audio.readyState < 3 && isPlaying && !intentionalPause.current) {
+                    attemptReconnect('stalled', 1500);
+                }
+            }, STALLED_GRACE);
+        };
+
+        // --- Monitoreo de buffer health (silencioso) ---
+        const onTimeUpdate = () => {
+            if (!audio.buffered.length) return;
+            const bufferEnd = audio.buffered.end(audio.buffered.length - 1);
+            const bufferHealth = bufferEnd - audio.currentTime;
+            bufferHealthRef.current = bufferHealth;
+
+            // Solo cambiar calidad visual, sin interrumpir ni reconectar
+            if (bufferHealth < 2 && isPlaying) setStreamQuality('weak');
+            else if (bufferHealth > 4 && isPlaying) setStreamQuality('good');
+        };
+
+        audio.addEventListener('waiting', onWaiting);
+        audio.addEventListener('canplay', onCanPlay);
+        audio.addEventListener('playing', onPlaying);
+        audio.addEventListener('error', onError);
+        audio.addEventListener('ended', onEnded);
+        audio.addEventListener('stalled', onStalled);
+        audio.addEventListener('timeupdate', onTimeUpdate);
+
+        return () => {
+            audio.removeEventListener('waiting', onWaiting);
+            audio.removeEventListener('canplay', onCanPlay);
+            audio.removeEventListener('playing', onPlaying);
+            audio.removeEventListener('error', onError);
+            audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('stalled', onStalled);
+            audio.removeEventListener('timeupdate', onTimeUpdate);
+            if (stalledTimeoutRef.current) clearTimeout(stalledTimeoutRef.current);
+            if (waitingTimerRef.current) clearTimeout(waitingTimerRef.current);
+        };
+    }, [isPlaying, attemptReconnect, getAudio]);
+
+    // ===================================================================
+    // Manejar cambio de URL del stream
+    // ===================================================================
+    useEffect(() => {
+        if (!streamUrl) return;
+        const audio = getAudio();
+        const wasPlaying = isPlaying;
+        const currentSrc = audio.src || '';
+        const fullStreamUrl = streamUrl.startsWith('/') ? window.location.origin + streamUrl : streamUrl;
+        const baseCurrentSrc = currentSrc.split('?')[0].split('#')[0];
+        const baseStreamUrl = fullStreamUrl.split('?')[0].split('#')[0];
+
+        if (baseCurrentSrc !== baseStreamUrl) {
+            audio.src = streamUrl;
+            audio.load();
+            if (wasPlaying) {
+                // Reconexión silenciosa al cambiar de stream
+                audio.play().then(() => {
+                    performFadeIn();
+                    setIsBuffering(false);
+                }).catch(() => {
                     setIsPlaying(false);
+                    setIsBuffering(false);
                 });
             }
         }
-    }, [streamUrl]);
+    }, [streamUrl, getAudio, performFadeIn]);
 
-    // Update <audio> volume when React state changes (unless a fade in is happening)
+    // Volumen sync
     useEffect(() => {
-        if (!fadeIntervalRef.current) {
-            audioRef.current.volume = volume;
-        }
-    }, [volume]);
+        const audio = getAudio();
+        if (!fadeIntervalRef.current) audio.volume = volume;
+    }, [volume, getAudio]);
 
-    // Sync React volume with native hardware volume changes (e.g. mobile volume buttons that impact web-audio natively)
     useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
+        const audio = getAudio();
         const handleVolumeChange = () => {
-            // Evitamos un loop si el fade-in nuestro está alterando el volumen activamente
-            if (!fadeIntervalRef.current && Math.abs(audio.volume - volume) > 0.05) {
-                setVolume(audio.volume);
-            }
+            if (!fadeIntervalRef.current && Math.abs(audio.volume - volume) > 0.05) setVolume(audio.volume);
         };
         audio.addEventListener('volumechange', handleVolumeChange);
         return () => audio.removeEventListener('volumechange', handleVolumeChange);
-    }, [volume]);
+    }, [volume, getAudio]);
 
-    // Media Session API para pantalla de bloqueo / auto
+    // ===================================================================
+    // Media Session API
+    // ===================================================================
     useEffect(() => {
         if ('mediaSession' in navigator && isPlaying) {
             navigator.mediaSession.metadata = new MediaMetadata({
@@ -312,136 +425,87 @@ export const AudioProvider = ({ children }) => {
                 artist: 'CTN Radio',
                 album: 'Transmisión Online',
                 artwork: [
-                    { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-                    { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' }
+                    { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
+                    { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
                 ]
             });
-
-            // Handlers para que los botones nativos del SO sincronicen con React
             navigator.mediaSession.setActionHandler('play', () => togglePlay());
             navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-            navigator.mediaSession.setActionHandler('stop', () => {
-                if (isPlaying) togglePlay();
-            });
+            navigator.mediaSession.setActionHandler('stop', () => { if (isPlaying) togglePlay(); });
         }
     }, [isPlaying, programaEnVivo]);
 
-    // Control de reproducción
-    const togglePlay = () => {
+    // ===================================================================
+    // Control principal — INICIO LIMPIO sin mensajes
+    // ===================================================================
+    const togglePlay = useCallback(() => {
         if (!streamUrl) return;
-
+        const audio = getAudio();
         setupAudioContext();
 
         if (isPlaying) {
-            audioRef.current.pause();
+            // PAUSA
+            intentionalPause.current = true;
+            audio.pause();
             setIsPlaying(false);
+            setIsBuffering(false);
+            setStreamQuality('good');
+            setError(null);
+            if (reconnectTimeoutRef.current) { clearTimeout(reconnectTimeoutRef.current); reconnectTimeoutRef.current = null; }
+            if (stalledTimeoutRef.current) { clearTimeout(stalledTimeoutRef.current); stalledTimeoutRef.current = null; }
+            reconnectAttemptsRef.current = 0;
         } else {
-            // Asegurarse de que el source esté cargado si fallaba
-            if (audioRef.current.readyState === 0 || audioRef.current.error) {
-               audioRef.current.load();
+            // PLAY — inicio limpio, sin "conectando"
+            intentionalPause.current = false;
+            // NO setIsBuffering(true) aquí — dejamos la UI limpia hasta que sea necesario
+
+            if (audio.readyState === 0 || audio.error || !hasEverPlayed.current) {
+                const timestamp = Date.now();
+                const separator = streamUrl.includes('?') ? '&' : '?';
+                audio.src = `${streamUrl}${separator}_t=${timestamp}`;
+                audio.load();
             }
 
-            audioRef.current.play()
+            audio.play()
                 .then(() => {
                     setIsPlaying(true);
+                    setIsBuffering(false);
                     setError(null);
+                    setStreamQuality('good');
                     reconnectAttemptsRef.current = 0;
+                    hasEverPlayed.current = true;
                     performFadeIn();
                 })
                 .catch(err => {
-                    console.error("Error al reproducir:", err);
-                    // Intentar re-cargar el stream si falló por completo
-                    if (err.name === 'NotSupportedError' || err.name === 'NotAllowedError') {
-                        setError("Error de reproducción. Reintentando...");
-                        audioRef.current.load();
+                    if (err.name === 'NotAllowedError') {
+                        // Requiere gesto del usuario — no mostrar error, reintentar automático
+                        setIsPlaying(false);
+                        setIsBuffering(false);
                     } else {
-                        setError("Error al conectar con la radio. Revisa la señal.");
+                        // Error real — intentar reconexión silenciosa
+                        setIsPlaying(true); // Mantener estado de "playing" para que el motor reconecte
+                        attemptReconnect('play-failed', 2000);
                     }
-                    setIsPlaying(false);
                 });
         }
-    };
+    }, [streamUrl, isPlaying, getAudio, setupAudioContext, performFadeIn, attemptReconnect]);
 
-    // Lógica de Auto-Reconexión para resolver cortes temporales de Icecast
+    // Cleanup
     useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const handleStreamDropout = (e) => {
-            // Solo intentar reconectar si se espera que esté reproduciendo
-            if (!isPlaying || !streamUrl) return;
-
-            console.log(`Stream interrumpido (evento: ${e.type}). Intentando reconectar en 5 segundos...`);
-            setError("Reconectando señal...");
-
-            // Limpiar timeouts previos
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-            }
-
-            // Retry Backoff Exponencial
-            reconnectAttemptsRef.current += 1;
-            let waitTime = 5000 * Math.pow(2, reconnectAttemptsRef.current - 1);
-            if (waitTime > 30000) waitTime = 30000; // Máximo 30 segundos de espera por intento
-
-            console.log(`Stream interrumpido (evento: ${e.type}). Intentando reconectar en ${waitTime/1000} segundos...`);
-            setError(`Reconectando señal en ${waitTime/1000}s...`);
-
-            // Esperar 'waitTime' antes de forzar reconexión para dar tiempo al switch de Icecast o recuperación paulatina
-            reconnectTimeoutRef.current = setTimeout(() => {
-                if (!isPlaying || !streamUrl) return; // Verificar nuevamente después del timeout
-
-                console.log(`Forzando reconexión del stream (intento ${reconnectAttemptsRef.current})...`);
-                const timestamp = new Date().getTime();
-                const separator = streamUrl.includes('?') ? '&' : '?';
-                const noCacheUrl = `${streamUrl}${separator}t=${timestamp}`;
-
-                // Recargar src para evadir caché, sin modificar streamUrl global para evitar parpadeos
-                audio.src = noCacheUrl;
-                audio.load();
-                
-                audio.play()
-                    .then(() => {
-                        console.log("Reconexión exitosa.");
-                        setError(null);
-                        reconnectAttemptsRef.current = 0; // Resetear intentos de error exitosos
-                        performFadeIn();
-                    })
-                    .catch(err => {
-                        console.error("Fallo al reconectar:", err);
-                        setError("Error de señal. Reintentando de nuevo...");
-                    });
-            }, waitTime);
-        };
-
-        // Escuchar eventos propensos a cortes
-        audio.addEventListener('error', handleStreamDropout);
-        audio.addEventListener('ended', handleStreamDropout);
-        audio.addEventListener('stalled', handleStreamDropout);
-        audio.addEventListener('suspend', handleStreamDropout);
-
         return () => {
-            audio.removeEventListener('error', handleStreamDropout);
-            audio.removeEventListener('ended', handleStreamDropout);
-            audio.removeEventListener('stalled', handleStreamDropout);
-            audio.removeEventListener('suspend', handleStreamDropout);
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-            }
+            if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+            if (stalledTimeoutRef.current) clearTimeout(stalledTimeoutRef.current);
+            if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+            if (waitingTimerRef.current) clearTimeout(waitingTimerRef.current);
         };
-    }, [isPlaying, streamUrl]);
+    }, []);
 
     return (
         <AudioContext.Provider value={{
-            isPlaying,
-            togglePlay,
-            volume,
-            setVolume,
-            streamUrl,
-            programaEnVivo,
-            isLoading,
-            error,
-            audioData
+            isPlaying, isBuffering, togglePlay, volume, setVolume,
+            streamUrl, programaEnVivo, isLoading, error,
+            audioData, frequencyBars, streamQuality,
         }}>
             {children}
         </AudioContext.Provider>

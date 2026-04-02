@@ -1,23 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useChat } from '../context/ChatContext';
 import { useAudio } from '../context/AudioContext';
-import { Send, Wifi, WifiOff, Users, MessageCircle, ChevronDown, ChevronLeft, MapPin, Heart, ShieldCheck, Smile } from 'lucide-react';
+import { Send, Wifi, WifiOff, Users, MessageCircle, ChevronDown, X, MapPin, Heart, ShieldCheck, Smile, Radio } from 'lucide-react';
 import logoUrl from '../assets/logo.svg';
 
 const ChatModal = ({ isOpen, onClose }) => {
   const { messages, isConnected, connections, sendMessage, sendReaction, markAsViewing } = useChat();
   const { programaEnVivo } = useAudio();
   
-  // Perfil
   const [nombre, setNombre] = useState(() => localStorage.getItem('ctn_chat_nombre') || '');
   const [localidad, setLocalidad] = useState(() => localStorage.getItem('ctn_chat_localidad') || '');
   const [isProfileReady, setIsProfileReady] = useState(() => !!localStorage.getItem('ctn_chat_nombre'));
   
-  // Helper para detectar si un mensaje es SOLO emojis (max 5 emojis)
   const isOnlyEmojis = (str) => {
     const trimmed = str.replace(/\s+/g, '');
     if (trimmed.length === 0 || trimmed.length > 10) return false;
-    // Regex moderno para todos los caracteres pictográficos/emojis
     const emojiRegex = /^[\p{Emoji_Presentation}\p{Extended_Pictographic}]+$/u;
     return emojiRegex.test(trimmed);
   };
@@ -26,18 +23,15 @@ const ChatModal = ({ isOpen, onClose }) => {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   
-  const commonEmojis = ['😀', '😂', '😍', '🙏', '🔥', '👍', '❤️', '🎉', '🎶', '📻'];
+  const commonEmojis = ['😀', '😂', '😍', '🙏', '🔥', '👍', '❤️', '🎉', '🎶', '📻', '💯', '👏'];
   
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && isProfileReady) {
-      markAsViewing(true);
-    } else {
-      markAsViewing(false);
-    }
+    if (isOpen && isProfileReady) markAsViewing(true);
+    else markAsViewing(false);
   }, [isOpen, isProfileReady, markAsViewing]);
 
   useEffect(() => {
@@ -45,21 +39,16 @@ const ChatModal = ({ isOpen, onClose }) => {
     const container = messagesContainerRef.current;
     if (!container) return;
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
-    if (isNearBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (isNearBottom) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen, isProfileReady]);
 
   const handleScroll = () => {
     const container = messagesContainerRef.current;
     if (!container) return;
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
-    setShowScrollBtn(!isNearBottom);
+    setShowScrollBtn(container.scrollHeight - container.scrollTop - container.clientHeight >= 120);
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -73,133 +62,115 @@ const ChatModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     const trimmedText = texto.trim();
     if (!trimmedText) return;
-    
-    // Oculto: Si el nombre empieza con /admin y pone la clave en la localidad o algo así... 
-    // Para simplificar, el admin usará el panel. Aquí envía versión normal.
     const sent = sendMessage(nombre, localidad, trimmedText);
-    if (sent) {
-      setTexto('');
-      setShowEmojis(false);
-      inputRef.current?.focus();
-    }
+    if (sent) { setTexto(''); setShowEmojis(false); inputRef.current?.focus(); }
   };
 
-  const addEmoji = (emoji) => {
-    setTexto(prev => prev + emoji);
-    inputRef.current?.focus();
-  };
-
-  const handleReaction = (msgId) => {
-    sendReaction(msgId);
-  };
+  const addEmoji = (emoji) => { setTexto(prev => prev + emoji); inputRef.current?.focus(); };
+  const handleReaction = (msgId) => sendReaction(msgId);
 
   const formatTime = (isoString) => {
     try {
       const date = new Date(isoString);
       const today = new Date();
       const isToday = date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-      
       const timeStr = date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-      const dateStr = date.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
-      
-      return isToday ? `Hoy ${timeStr}` : `${dateStr} ${timeStr}`;
-    } catch {
-      return '';
-    }
+      return isToday ? timeStr : `${date.toLocaleDateString('es', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
+    } catch { return ''; }
   };
 
-  const nameColors = [
-    '#E63946', '#4361EE', '#2EC4B6', '#FF6B35', '#9B5DE5',
-    '#F72585', '#4CC9F0', '#06D6A0', '#FFC43D', '#EF476F',
-  ];
-
+  const nameColors = ['#E63946', '#4361EE', '#2EC4B6', '#FF6B35', '#9B5DE5', '#F72585', '#4CC9F0', '#06D6A0', '#FFC43D', '#EF476F'];
   const getNameColor = (name) => {
     if (!name) return '#6B7280';
     let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return nameColors[Math.abs(hash) % nameColors.length];
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-16 md:top-0 left-0 right-0 bottom-0 z-40 flex items-center justify-center p-0 sm:p-4 bg-black/40 sm:bg-black/80 backdrop-blur-sm transition-opacity pb-[140px] md:pb-0">
-      <div className="w-full h-full sm:h-auto sm:max-h-[85vh] max-w-lg bg-[var(--color-primary)] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/5 relative">
+    <div 
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div 
+        className="w-full h-[85vh] sm:h-auto sm:max-h-[80vh] max-w-md bg-[#0d0d12] sm:rounded-3xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative border border-white/[0.06] animate-slide-in-bottom mb-[3.8rem] sm:mb-0"
+        onClick={e => e.stopPropagation()}
+      >
         
-        {/* HEADER MODAL */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-surface)] border-b border-[var(--color-card-border)] sticky top-0 z-20 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onClose}
-              className="flex items-center gap-1 pl-1 pr-3 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors font-bold text-sm text-[var(--text-main)]"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Atrás
-            </button>
-            <div className="h-6 w-px bg-[var(--color-card-border)] mx-1"></div>
-            <div className="flex flex-col">
-              <span className="text-white text-xs font-bold truncate max-w-[140px] sm:max-w-[180px]">
-                {programaEnVivo || 'CTN Radio Online'}
-              </span>
-              <div className="flex items-center gap-2 text-[9px] font-bold">
-                <span className={`flex items-center gap-1 ${isConnected ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                  {isConnected ? 'EN LÍNEA' : 'DESCONECTADO'}
+        {/* ===== HEADER ===== */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border-b border-white/[0.06] shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-accent-red/10 flex items-center justify-center shrink-0">
+              <MessageCircle className="w-4.5 h-4.5 text-accent-red" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-white truncate">Chat en Vivo</h3>
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className={`flex items-center gap-1 font-semibold ${isConnected ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}></span>
+                  {isConnected ? 'Conectado' : 'Sin conexión'}
                 </span>
-                <span className="text-[var(--text-muted)] flex items-center gap-1">
+                <span className="text-white/30">·</span>
+                <span className="text-white/40 flex items-center gap-1">
                   <Users className="w-3 h-3" /> {connections}
                 </span>
               </div>
             </div>
           </div>
+          
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-90 text-white/50 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* CONTENIDO CONTENIDO */}
+        {/* ===== PROGRAMA ACTUAL (banner sutil) ===== */}
+        {programaEnVivo && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-accent-red/[0.05] border-b border-white/[0.04] text-[10px] text-white/50 font-semibold uppercase tracking-wider shrink-0">
+            <Radio className="w-3 h-3 text-accent-red animate-pulse" />
+            <span className="truncate">{programaEnVivo}</span>
+          </div>
+        )}
+
+        {/* ===== CONTENIDO ===== */}
         <div className="flex-1 flex flex-col min-h-0 relative">
           
           {/* PANTALLA DE PERFIL */}
           {!isProfileReady ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-              <div className="w-20 h-20 bg-black/20 rounded-full flex items-center justify-center mb-6 shadow-inner ring-1 ring-white/10">
-                <img src={logoUrl} alt="Logo" className="w-12 h-12 opacity-80" />
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-6">
+                <img src={logoUrl} alt="Logo" className="w-12 h-12 opacity-60" />
               </div>
-              <h3 className="text-2xl font-title font-bold mb-2 text-white">¡Únete a la charla!</h3>
-              <p className="text-sm text-white/70 mb-8 max-w-xs">
-                Ingresa tu nombre para empezar a mensajear con la comunidad en vivo.
+              <h3 className="text-xl font-title font-bold mb-2 text-white">¡Únete a la charla!</h3>
+              <p className="text-sm text-white/40 mb-8 max-w-xs leading-relaxed">
+                Ingresa tu nombre para participar en el chat con la comunidad.
               </p>
               
-              <form onSubmit={handleSaveProfile} className="w-full max-w-sm space-y-4">
-                <div className="space-y-1 text-left">
-                  <label className="text-xs font-bold text-text-muted uppercase ml-1">Tu Nombre o Apodo</label>
+              <form onSubmit={handleSaveProfile} className="w-full max-w-sm space-y-3">
+                <div>
                   <input
-                    type="text"
-                    required
-                    maxLength={30}
-                    value={nombre}
-                    onChange={e => setNombre(e.target.value)}
-                    placeholder="Ej. Juan Pérez"
-                    className="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--color-card-border)] focus:ring-2 focus:ring-accent-red/50 focus:border-accent-red transition-all"
+                    type="text" required maxLength={30}
+                    value={nombre} onChange={e => setNombre(e.target.value)}
+                    placeholder="Tu nombre o apodo"
+                    className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white text-sm placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-accent-red/30 focus:border-accent-red/30 transition-all"
                   />
                 </div>
-                <div className="space-y-1 text-left">
-                  <label className="text-xs font-bold text-text-muted uppercase ml-1">¿Desde dónde nos escuchas? (Opcional)</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                    <input
-                      type="text"
-                      maxLength={40}
-                      value={localidad}
-                      onChange={e => setLocalidad(e.target.value)}
-                      placeholder="Ej. Asunción, Py"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--color-card-border)] focus:ring-2 focus:ring-accent-red/50 focus:border-accent-red transition-all"
-                    />
-                  </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input
+                    type="text" maxLength={40}
+                    value={localidad} onChange={e => setLocalidad(e.target.value)}
+                    placeholder="¿Desde dónde nos escuchas? (opcional)"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white text-sm placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-accent-red/30 focus:border-accent-red/30 transition-all"
+                  />
                 </div>
                 <button 
                   type="submit"
-                  className="w-full py-3.5 rounded-xl bg-accent-red text-white font-bold tracking-wide hover:bg-red-600 active:scale-[0.98] transition-all shadow-lg shadow-red-500/20 mt-4"
+                  className="w-full py-3.5 rounded-xl bg-accent-red text-white font-bold text-sm hover:bg-red-600 active:scale-[0.98] transition-all shadow-lg shadow-accent-red/20 mt-2"
                 >
                   Entrar al Chat
                 </button>
@@ -209,21 +180,22 @@ const ChatModal = ({ isOpen, onClose }) => {
             
             /* PANTALLA DE CHAT */
             <>
-              {/* Marca de agua de fondo */}
+              {/* Marca de agua */}
               <div 
-                className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-center bg-no-repeat bg-[length:200px]"
+                className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none bg-center bg-no-repeat bg-[length:160px]"
                 style={{ backgroundImage: `url(${logoUrl})` }}
               ></div>
 
+              {/* Mensajes */}
               <div 
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-2 py-4 space-y-3 scroll-smooth bg-transparent relative z-10"
+                className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scroll-smooth relative z-10 scrollbar-hide"
               >
                 {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] text-center gap-3 opacity-80">
-                    <MessageCircle className="w-12 h-12" />
-                    <p className="text-sm">No hay mensajes aún.<br />¡Rompe el hielo!</p>
+                  <div className="flex flex-col items-center justify-center h-full text-white/20 text-center gap-3">
+                    <MessageCircle className="w-10 h-10" />
+                    <p className="text-sm">No hay mensajes aún.<br/>¡Sé el primero!</p>
                   </div>
                 )}
 
@@ -232,125 +204,123 @@ const ChatModal = ({ isOpen, onClose }) => {
                   const soloEmoji = isOnlyEmojis(msg.texto);
                   
                   return (
-                  <div key={msg.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div 
-                      className={`group relative flex flex-col gap-1 px-4 py-3 transition-all duration-200 shadow-sm sm:max-w-[75%] max-w-[85%] w-fit
-                        ${soloEmoji ? 'bg-transparent border-none shadow-none px-1 py-1' : ''}
-                        ${!soloEmoji && msg.admin 
-                          ? 'bg-[#1e293b] dark:bg-[#1e293b] bg-opacity-10 dark:bg-opacity-80 border border-accent-red/20 text-[var(--text-main)] rounded-xl rounded-tl-sm' 
-                          : !soloEmoji && isMe 
-                            ? 'bg-emerald-600 border border-emerald-500 text-white rounded-xl rounded-tr-sm' 
-                            : !soloEmoji 
-                              ? 'bg-[#1e293b] dark:bg-[#1e293b] bg-opacity-10 dark:bg-opacity-80 border border-[var(--color-card-border)] text-[var(--text-main)] rounded-xl rounded-tl-sm'
-                              : ''}`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex flex-col">
+                    <div key={msg.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div 
+                        className={`group relative flex flex-col max-w-[80%] transition-all duration-200
+                          ${soloEmoji 
+                            ? 'px-1 py-0.5' 
+                            : msg.admin
+                              ? 'bg-accent-red/[0.08] border border-accent-red/15 rounded-2xl rounded-tl-md px-3.5 py-2.5'
+                              : isMe 
+                                ? 'bg-accent-red rounded-2xl rounded-tr-md px-3.5 py-2.5 shadow-sm shadow-accent-red/10'
+                                : 'bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-md px-3.5 py-2.5'
+                          }`}
+                      >
+                        {/* Header: nombre + hora */}
+                        <div className="flex items-center justify-between gap-3 mb-0.5">
                           {!isMe && (
-                            <div className="flex items-center gap-2 mb-0.5">
-                              {msg.admin && (
-                                <img src={logoUrl} alt="CTN" className="w-6 h-6 drop-shadow-md" />
-                              )}
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {msg.admin && <img src={logoUrl} alt="CTN" className="w-4 h-4 shrink-0" />}
                               <span 
-                                className={`text-sm font-title font-bold truncate max-w-[150px] ${msg.admin ? 'text-accent-red' : ''}`}
+                                className={`text-[12px] font-bold truncate ${msg.admin ? 'text-accent-red' : ''}`}
                                 style={{ color: msg.admin ? undefined : getNameColor(msg.nombre) }}
                               >
-                                {msg.admin ? `EQUIPO CTN RADIO` : msg.nombre}
+                                {msg.admin ? 'CTN RADIO' : msg.nombre}
                               </span>
-                              {msg.admin && (
-                                <ShieldCheck className="w-4 h-4 text-accent-red" />
+                              {msg.admin && <ShieldCheck className="w-3 h-3 text-accent-red shrink-0" />}
+                              {!msg.admin && msg.localidad && (
+                                <span className="text-[9px] text-white/25 flex items-center gap-0.5 shrink-0">
+                                  <MapPin className="w-2 h-2" /> {msg.localidad}
+                                </span>
                               )}
                             </div>
                           )}
-                          {!isMe && msg.localidad && (
-                            <span className="text-[9px] text-text-muted flex items-center gap-0.5 mt-0.5">
-                              <MapPin className="w-2.5 h-2.5" /> {msg.localidad}
-                            </span>
-                          )}
+                          <span className={`text-[9px] shrink-0 ${isMe && !soloEmoji ? 'text-white/50' : 'text-white/20'} ${isMe && !soloEmoji ? '' : 'ml-auto'}`}>
+                            {formatTime(msg.hora)}
+                          </span>
                         </div>
-                        <span className={`text-[9px] font-mono shrink-0 pt-1 ${isMe && !soloEmoji ? 'opacity-50' : 'text-text-muted'}`}>
-                          {formatTime(msg.hora)}
-                        </span>
-                      </div>
-                      
-                      <p className={`leading-relaxed break-words mt-1 ${soloEmoji ? 'text-5xl leading-tight' : 'text-sm'} ${msg.admin && !soloEmoji ? 'font-medium' : ''}`}>
-                        {msg.texto}
-                      </p>
+                        
+                        {/* Texto */}
+                        <p className={`leading-relaxed break-words ${soloEmoji ? 'text-4xl' : 'text-[13px]'} ${isMe && !soloEmoji ? 'text-white' : soloEmoji ? '' : 'text-white/80'} ${msg.admin ? 'font-medium' : ''}`}>
+                          {msg.texto}
+                        </p>
 
-                      {/* Fila inferior: Reacciones */}
-                      <div className={`flex items-center justify-end gap-2 mt-1 ${soloEmoji ? '' : '-mr-1 -mb-1'}`}>
-                        <button 
-                          onClick={() => handleReaction(msg.id)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-all
-                            ${msg.reacciones > 0 
-                              ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' 
-                              : `hover:bg-black/5 dark:hover:bg-white/5 opacity-0 group-hover:opacity-100 sm:opacity-100 ${isMe && !soloEmoji ? 'opacity-50 text-white' : 'text-text-muted'}`}`}
-                        >
-                          <Heart className={`w-3 h-3 ${msg.reacciones > 0 ? 'fill-current' : ''} active:scale-150 transition-transform`} />
-                          {msg.reacciones > 0 && <span>{msg.reacciones}</span>}
-                        </button>
+                        {/* Reacciones */}
+                        {!soloEmoji && (
+                          <div className="flex items-center justify-end mt-1 -mr-1 -mb-0.5">
+                            <button 
+                              onClick={() => handleReaction(msg.id)}
+                              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all
+                                ${msg.reacciones > 0 
+                                  ? 'bg-rose-500/15 text-rose-400' 
+                                  : `opacity-0 group-hover:opacity-100 ${isMe ? 'text-white/40 hover:text-white/70' : 'text-white/20 hover:text-white/50'}`
+                                }`}
+                            >
+                              <Heart className={`w-2.5 h-2.5 ${msg.reacciones > 0 ? 'fill-current' : ''}`} />
+                              {msg.reacciones > 0 && <span>{msg.reacciones}</span>}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )})}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Botón scroll abajo */}
               {showScrollBtn && (
                 <button
                   onClick={scrollToBottom}
-                  className="absolute bottom-20 right-4 z-10 p-2 rounded-full glass-card shadow-lg hover:scale-110 transition-transform text-accent-red"
+                  className="absolute bottom-20 right-3 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg flex items-center justify-center hover:bg-white/20 transition-all text-white/60"
                 >
-                  <ChevronDown className="w-5 h-5" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               )}
 
-              {/* INPUT ZONA */}
-              <div className="bg-[var(--color-surface)] border-t border-[var(--color-card-border)] p-3 z-20 flex flex-col gap-2 relative shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
+              {/* ===== INPUT ===== */}
+              <div className="bg-[#0d0d12] border-t border-white/[0.06] p-3 z-20 shrink-0">
+                {/* Emoji picker */}
                 {showEmojis && (
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 px-1 scrollbar-hide animate-in slide-in-from-bottom-2 fade-in">
+                  <div className="flex items-center gap-1 overflow-x-auto pb-2 px-1 scrollbar-hide animate-fade-in">
                     {commonEmojis.map(emoji => (
                       <button 
-                        key={emoji} 
-                        type="button"
+                        key={emoji} type="button"
                         onClick={() => addEmoji(emoji)}
-                        className="text-2xl hover:scale-125 transition-transform p-1.5 focus:outline-none"
+                        className="text-xl hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-white/5"
                       >
                         {emoji}
                       </button>
                     ))}
                   </div>
                 )}
-                <form onSubmit={handleSend} className="flex gap-2 relative items-end">
+                <form onSubmit={handleSend} className="flex gap-2 items-end">
                   <button
                     type="button"
                     onClick={() => setShowEmojis(!showEmojis)}
-                    className="h-[44px] w-[44px] flex-shrink-0 flex items-center justify-center rounded-2xl bg-black/5 dark:bg-white/5 text-text-muted hover:text-text-main hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                    className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all ${showEmojis ? 'bg-accent-red/10 text-accent-red' : 'bg-white/[0.04] text-white/30 hover:text-white/60 hover:bg-white/[0.08]'}`}
                   >
                     <Smile className="w-5 h-5" />
                   </button>
-                  <textarea
-                    ref={inputRef}
-                    value={texto}
-                    onChange={(e) => setTexto(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend(e);
-                      }
-                    }}
-                    placeholder={isConnected ? "Escribe un mensaje..." : "Conectando..."}
-                    disabled={!isConnected}
-                    maxLength={280}
-                    rows={1}
-                    className="flex-1 min-h-[44px] max-h-[120px] px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-transparent focus:border-accent-red/30 text-sm focus:outline-none resize-none transition-all disabled:opacity-50 !scrollbar-hide"
-                  />
+                  <div className="flex-1 relative">
+                    <textarea
+                      ref={inputRef}
+                      value={texto}
+                      onChange={(e) => setTexto(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(e); }}}
+                      placeholder={isConnected ? "Escribe un mensaje..." : "Conectando..."}
+                      disabled={!isConnected}
+                      maxLength={280}
+                      rows={1}
+                      className="w-full min-h-[40px] max-h-[100px] px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent-red/20 resize-none transition-all disabled:opacity-40 scrollbar-hide"
+                    />
+                  </div>
                   <button
                     type="submit"
                     disabled={!isConnected || !texto.trim()}
-                    className="h-[44px] w-[44px] flex-shrink-0 flex items-center justify-center rounded-2xl bg-accent-red text-white hover:bg-red-600 active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 shadow-md"
+                    className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-accent-red text-white hover:bg-red-600 active:scale-90 transition-all disabled:opacity-20 disabled:scale-100 shadow-lg shadow-accent-red/15"
                   >
-                    <Send className="w-5 h-5 ml-0.5" />
+                    <Send className="w-4.5 h-4.5" />
                   </button>
                 </form>
               </div>

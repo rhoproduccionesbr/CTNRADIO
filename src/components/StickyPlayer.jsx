@@ -1,87 +1,109 @@
 import { useAudio } from '../context/AudioContext';
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { useState } from 'react';
+import { Play, Pause, Volume2, Loader2, Signal, WifiOff } from 'lucide-react';
 
 const StickyPlayer = () => {
-    const { isPlaying, togglePlay, volume, setVolume, streamUrl, programaEnVivo, audioData } = useAudio();
+    const { 
+        isPlaying, isBuffering, togglePlay, volume, setVolume, 
+        streamUrl, programaEnVivo, audioData, frequencyBars, streamQuality, error 
+    } = useAudio();
     
     if (!streamUrl) return null;
 
     const scale = audioData || 1;
+    const qualityConfig = {
+        good: { color: 'text-emerald-400', icon: Signal },
+        weak: { color: 'text-amber-400', icon: Signal },
+        reconnecting: { color: 'text-red-400', icon: WifiOff },
+        offline: { color: 'text-red-500', icon: WifiOff },
+    };
+    const quality = qualityConfig[streamQuality] || qualityConfig.good;
+    const QualityIcon = quality.icon;
 
     return (
-        <div className="fixed bottom-[4rem] md:bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-t border-white/10 px-4 py-3 sm:px-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 md:gap-8 overflow-hidden">
-                
-                {/* Lado Izquierdo: Control & Info */}
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
-                        onClick={togglePlay}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isPlaying ? 'bg-accent-red text-white shadow-[0_0_15px_rgba(230,57,70,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                    >
-                        {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
-                    </button>
+        <div className="fixed bottom-[4.2rem] md:bottom-0 left-0 right-0 z-40">
+            {/* Gradient shadow arriba */}
+            <div className="h-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none -mb-px"></div>
+            
+            <div className="bg-black/90 backdrop-blur-2xl border-t border-white/[0.04] px-4 py-2.5 sm:px-6">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 md:gap-6">
+                    
+                    {/* Left: Play + Info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Play Button */}
+                        <button
+                            onClick={togglePlay}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 relative ${
+                                isPlaying 
+                                    ? 'bg-accent-red text-white shadow-lg shadow-accent-red/25' 
+                                    : 'bg-white/8 text-white hover:bg-white/15'
+                            }`}
+                        >
+                            {isBuffering ? (
+                                <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                            ) : isPlaying ? (
+                                <Pause className="w-4.5 h-4.5 fill-current" />
+                            ) : (
+                                <Play className="w-4.5 h-4.5 fill-current ml-0.5" />
+                            )}
+                            {isBuffering && <span className="absolute inset-0 rounded-xl border border-accent-red/30 animate-ping"></span>}
+                        </button>
 
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-accent-red animate-pulse' : 'bg-white/20'}`}></span>
-                            <span className="text-[10px] font-black tracking-[0.2em] text-white/40 uppercase truncate">
-                                CTN RADIO - {isPlaying ? 'Sintonizado' : 'En Pausa'}
-                            </span>
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className={`w-1 h-1 rounded-full transition-colors ${
+                                    isBuffering ? 'bg-amber-400 animate-pulse' :
+                                    isPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-white/15'
+                                }`}></span>
+                                <span className="text-[9px] font-semibold tracking-[0.15em] text-white/30 uppercase truncate">
+                                    CTN Radio · {isBuffering ? 'Cargando' : isPlaying ? 'En vivo' : 'Pausa'}
+                                </span>
+                                {isPlaying && (
+                                    <span className={`${quality.color} transition-colors`}>
+                                        <QualityIcon className="w-2.5 h-2.5" />
+                                    </span>
+                                )}
+                            </div>
+                            <h3 className="text-[13px] font-bold text-white truncate leading-snug">
+                                {error || programaEnVivo || 'Programación en Vivo'}
+                            </h3>
                         </div>
-                        <h3 className="text-xs sm:text-sm font-bold text-white uppercase truncate">
-                            {programaEnVivo || 'Programación en Vivo'}
-                        </h3>
                     </div>
-                </div>
 
-                {/* Centro: Animación Bar Waveform Moderna (Visible en MD+) */}
-                <div className="hidden md:flex flex-1 items-center justify-center gap-[3px] h-8">
-                    {[...Array(20)].map((_, i) => {
-                        // Formula mejorada de ecualización simulada basada en scale y factores senoidales complejos
-                        const factor = isPlaying ? Math.abs(Math.sin((i * 0.8) + (Date.now() / 200)) * Math.cos((i * 0.3) - (Date.now() / 300))) : 0;
-                        const heightValue = isPlaying ? Math.max(10, (scale * 80 * factor) + (Math.random() * 20 * scale)) : 10;
-                        return (
+                    {/* Center: EQ Bars (desktop) */}
+                    <div className="hidden md:flex flex-1 items-center justify-center gap-[2px] h-7 max-w-xs">
+                        {frequencyBars.map((barHeight, i) => (
                             <div
                                 key={i}
-                                className={`w-1 rounded-full bg-accent-red transition-all duration-75 ${isPlaying ? 'opacity-100' : 'opacity-20'}`}
+                                className={`w-[3px] rounded-full transition-all duration-100 ease-out ${
+                                    isPlaying && !isBuffering ? 'bg-gradient-to-t from-accent-red/60 to-accent-red' : 'bg-white/[0.06]'
+                                }`}
                                 style={{
-                                    height: `${heightValue}%`
+                                    height: isPlaying && !isBuffering ? `${Math.max(8, barHeight)}%` : '8%',
                                 }}
                             ></div>
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
 
-                {/* Lado Derecho: Volumen & Logo Sutil */}
-                <div className="flex items-center gap-6 justify-end flex-1 md:flex-none">
-                    <div className="hidden sm:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5 group">
-                        <Volume2 className="w-4 h-4 text-white/30 group-hover:text-accent-red transition-colors" />
-                        <div className="relative w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                            <input
-                                type="range"
-                                min="0" max="1" step="0.01"
-                                value={volume}
-                                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            />
-                            <div 
-                                className="h-full bg-accent-red transition-all duration-75"
-                                style={{ width: `${volume * 100}%` }}
-                            ></div>
+                    {/* Right: Volume + Logo */}
+                    <div className="flex items-center gap-3 justify-end shrink-0">
+                        <div className="hidden sm:flex items-center gap-2.5 bg-white/[0.04] px-3.5 py-2 rounded-xl border border-white/[0.04] group">
+                            <Volume2 className="w-3.5 h-3.5 text-white/25 group-hover:text-accent-red transition-colors" />
+                            <div className="relative w-20 h-[3px] bg-white/8 rounded-full overflow-hidden">
+                                <input
+                                    type="range" min="0" max="1" step="0.01"
+                                    value={volume}
+                                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <div className="h-full bg-accent-red rounded-full transition-all duration-75" style={{ width: `${volume * 100}%` }}></div>
+                            </div>
                         </div>
                     </div>
-                    {/* Indicador Logo en Mobile/Desktop */}
-                    <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-white/5">
-                        <span className="text-[8px] font-black text-white/30 tracking-tight">CTN</span>
-                    </div>
                 </div>
-
             </div>
         </div>
     );
 };
-
-
 
 export default StickyPlayer;

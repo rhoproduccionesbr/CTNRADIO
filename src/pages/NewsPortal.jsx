@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { Newspaper, Loader2, Search } from 'lucide-react';
+import { Newspaper, Loader2, Search, TrendingUp } from 'lucide-react';
 import NewsCard from '../components/NewsCard';
 
 const NewsPortal = () => {
@@ -10,23 +10,15 @@ const NewsPortal = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // Obtenemos las últimas 20 noticias publicadas
-        const q = query(
-            collection(db, 'noticias'),
-            orderBy('fecha', 'desc'),
-            limit(20)
-        );
-
+        const q = query(collection(db, 'noticias'), orderBy('fecha', 'desc'), limit(20));
         const unsub = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setNoticias(data);
             setLoading(false);
         });
-
         return () => unsub();
     }, []);
 
-    // Filtro simple en el cliente
     const noticiasFiltradas = noticias.filter(n => {
         if (!searchTerm) return true;
         const lowerTerm = searchTerm.toLowerCase();
@@ -35,55 +27,72 @@ const NewsPortal = () => {
     });
 
     return (
-        <div className="container mx-auto px-4 py-12 pt-32 max-w-7xl">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-                <div>
-                    <h1 className="text-4xl md:text-5xl font-title font-bold text-white mb-4 flex items-center">
-                        <Newspaper className="w-10 h-10 mr-4 text-accent-red" />
-                        Portal de Noticias
-                    </h1>
-                    <p className="text-gray-400 text-lg">Mantente informado con las novedades locales e internacionales.</p>
-                </div>
+        <div className="min-h-screen pt-24 pb-32 px-4 sm:px-6">
+            {/* Header moderno con glow */}
+            <div className="page-header max-w-7xl mx-auto mb-12 relative">
+                <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <div className="inline-flex items-center gap-2 bg-accent-red/8 text-accent-red text-[11px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-4 border border-accent-red/10">
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                Últimas Noticias
+                            </div>
+                            <h1 className="text-4xl sm:text-5xl font-title font-black text-[var(--text-main)] tracking-tight mb-3">
+                                Portal de <span className="gradient-text">Noticias</span>
+                            </h1>
+                            <p className="text-[var(--text-muted)] text-base">
+                                Mantente informado con las novedades locales e internacionales.
+                            </p>
+                        </div>
 
-                <div className="relative w-full md:w-72">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-500" />
+                        {/* Search */}
+                        <div className="relative w-full md:w-72">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-[var(--text-muted)]" />
+                            </div>
+                            <input
+                                type="text"
+                                className="block w-full pl-10 pr-4 py-3 glass-card rounded-xl text-sm text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-accent-red/20 focus:border-accent-red/30 transition-all"
+                                placeholder="Buscar noticias..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <input
-                        type="text"
-                        className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl leading-5 bg-black/50 text-white placeholder-gray-500 focus:outline-none focus:bg-black/80 focus:ring-1 focus:ring-accent-red focus:border-accent-red transition sm:text-sm"
-                        placeholder="Buscar noticias..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
                 </div>
             </div>
 
-            <div className="w-24 h-1 bg-accent-red mb-12 rounded-full"></div>
-
-            {loading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                    <Loader2 className="w-12 h-12 text-accent-red animate-spin mb-4" />
-                    <p className="text-gray-400 font-bold">Cargando noticias...</p>
-                </div>
-            ) : noticias.length === 0 ? (
-                <div className="text-center py-20 glass-card rounded-3xl border border-white/5">
-                    <Newspaper className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-white mb-2">No hay noticias publicadas</h3>
-                    <p className="text-gray-400">Pronto el equipo editorial subirá nuevo contenido.</p>
-                </div>
-            ) : noticiasFiltradas.length === 0 ? (
-                <div className="text-center py-20">
-                    <h3 className="text-xl font-bold text-white mb-2">Sin resultados</h3>
-                    <p className="text-gray-400">No se encontraron noticias que coincidan con tu búsqueda.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                    {noticiasFiltradas.map((noticia) => (
-                        <NewsCard key={noticia.id} noticia={noticia} />
-                    ))}
-                </div>
-            )}
+            <div className="max-w-7xl mx-auto">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-24">
+                        <div className="w-16 h-16 rounded-2xl bg-accent-red/10 flex items-center justify-center mb-4">
+                            <Loader2 className="w-7 h-7 text-accent-red animate-spin" />
+                        </div>
+                        <p className="text-[var(--text-muted)] font-semibold text-sm">Cargando noticias...</p>
+                    </div>
+                ) : noticias.length === 0 ? (
+                    <div className="text-center py-24 glass-card rounded-2xl">
+                        <div className="w-20 h-20 rounded-2xl bg-[var(--card-border)] mx-auto mb-6 flex items-center justify-center">
+                            <Newspaper className="w-8 h-8 text-[var(--text-muted)]" />
+                        </div>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">No hay noticias publicadas</h3>
+                        <p className="text-[var(--text-muted)] text-sm">Pronto el equipo editorial subirá nuevo contenido.</p>
+                    </div>
+                ) : noticiasFiltradas.length === 0 ? (
+                    <div className="text-center py-20">
+                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Sin resultados</h3>
+                        <p className="text-[var(--text-muted)] text-sm">No se encontraron noticias que coincidan con tu búsqueda.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {noticiasFiltradas.map((noticia, idx) => (
+                            <div key={noticia.id} className="animate-fade-in-up" style={{ animationDelay: `${idx * 60}ms` }}>
+                                <NewsCard noticia={noticia} />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -10,20 +10,42 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'pwa-icon.png', 'splash-icon.png'],
       manifest: {
-        name: 'CTN Radio',
+        name: 'CTN Radio — De Guarambaré al Mundo',
         short_name: 'CTN Radio',
-        description: 'De Guarambaré al mundo. Emisora digital 24/7 con noticias, programación y entretenimiento.',
+        description: 'Emisora digital 24/7 con noticias, programación en vivo, chat comunitario y entretenimiento. Desde Guarambaré, Paraguay.',
         theme_color: '#0A0A0A',
         background_color: '#0A0A0A',
         display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        scope: '/',
+        categories: ['music', 'entertainment', 'news'],
         icons: [
           {
             src: '/logo.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-icon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-icon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: '/splash-icon.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       }
