@@ -115,7 +115,7 @@ const HeroPlayer = ({ contacto, galeria }) => {
                         {/* Logo libre */}
                         <img 
                             src={logoUrl} alt="CTN" 
-                            className={`w-8 h-8 object-contain drop-shadow-lg transition-all duration-700 ${isPlaying ? 'animate-float-constant' : 'opacity-60'}`}
+                            className={`w-12 h-12 object-contain drop-shadow-lg transition-all duration-700 ${isPlaying ? 'animate-float-constant' : 'opacity-60'}`}
                         />
                         {/* Oyentes */}
                         {listenersCount !== null && (

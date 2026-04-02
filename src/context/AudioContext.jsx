@@ -168,8 +168,17 @@ export const AudioProvider = ({ children }) => {
         if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
     }, [getAudio]);
 
-    const analyzeAudio = useCallback(() => {
+    const lastFrameRef = useRef(0);
+    const analyzeAudio = useCallback((timestamp) => {
         if (!analyserRef.current) return;
+        
+        // Throttle to ~24fps (cada 42ms) — imperceptible pero ahorra 60% CPU
+        if (timestamp - lastFrameRef.current < 42) {
+            animationRef.current = requestAnimationFrame(analyzeAudio);
+            return;
+        }
+        lastFrameRef.current = timestamp;
+
         const bufferLength = analyserRef.current.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         analyserRef.current.getByteFrequencyData(dataArray);
@@ -178,7 +187,7 @@ export const AudioProvider = ({ children }) => {
         for (let i = 0; i < 10; i++) bassSum += dataArray[i];
         setAudioData(1 + (bassSum / 10 / 255) * 0.2);
 
-        const barCount = 20;
+        const barCount = 16;
         const barsPerGroup = Math.floor(bufferLength / barCount);
         const newBars = new Array(barCount);
         for (let i = 0; i < barCount; i++) {
@@ -192,10 +201,10 @@ export const AudioProvider = ({ children }) => {
 
     useEffect(() => {
         if (isPlaying && !isBuffering) {
-            analyzeAudio();
+            animationRef.current = requestAnimationFrame(analyzeAudio);
         } else {
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
-            if (!isPlaying) { setAudioData(1); setFrequencyBars(new Array(20).fill(0)); }
+            if (!isPlaying) { setAudioData(1); setFrequencyBars(new Array(16).fill(0)); }
         }
         return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
     }, [isPlaying, isBuffering, analyzeAudio]);

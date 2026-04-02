@@ -37,8 +37,7 @@ const Navbar = () => {
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2.5 group">
-                            <img src={logoUrl} alt="CTN" className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" />
-                            <span className="text-lg font-title font-black tracking-tight">
+                            <span className="text-lg font-title font-black tracking-tight mt-1">
                                 CTN <span className="text-accent-red">RADIO</span>
                             </span>
                         </Link>
