@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { MapPin, Phone, Mail, Clock, Send, Radio, Info, Target, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, Radio, Info, Target, Loader2, Globe, MessageCircle, ExternalLink } from 'lucide-react';
 
 const Contacto = () => {
     const [instData, setInstData] = useState(null);
@@ -40,7 +40,7 @@ const Contacto = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-12 pt-32 max-w-6xl space-y-24">
+        <div className="container mx-auto px-4 py-12 pt-32 max-w-6xl space-y-24 pb-32">
             
             {/* SECCIÓN INSTITUCIONAL */}
             <section>
@@ -121,25 +121,35 @@ const Contacto = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start space-x-4 group">
-                                    <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent-blue/20 transition-colors">
-                                        <Phone className="w-6 h-6 text-accent-blue" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white text-lg">WhatsApp en Estudio</h3>
-                                        <p className="text-gray-400">+595 (Completar número)</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start space-x-4 group">
+                                <a href="https://wa.me/595981687708" target="_blank" rel="noopener noreferrer" className="flex items-start space-x-4 group cursor-pointer">
                                     <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
-                                        <Mail className="w-6 h-6 text-green-400" />
+                                        <MessageCircle className="w-6 h-6 text-green-400" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-white text-lg">Correo Electrónico</h3>
-                                        <p className="text-gray-400">contacto@ctnradio.com</p>
+                                        <h3 className="font-bold text-white text-lg group-hover:text-green-400 transition-colors">WhatsApp Directo</h3>
+                                        <p className="text-gray-400">+595 981 687 708</p>
                                     </div>
-                                </div>
+                                </a>
+
+                                <a href="mailto:ctnradio@gmail.com" className="flex items-start space-x-4 group cursor-pointer">
+                                    <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent-blue/20 transition-colors">
+                                        <Mail className="w-6 h-6 text-accent-blue" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white text-lg group-hover:text-accent-blue transition-colors">Correo Electrónico</h3>
+                                        <p className="text-gray-400">ctnradio@gmail.com</p>
+                                    </div>
+                                </a>
+
+                                <a href="https://ctnradio.com.py" target="_blank" rel="noopener noreferrer" className="flex items-start space-x-4 group cursor-pointer">
+                                    <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-purple-500/20 transition-colors">
+                                        <Globe className="w-6 h-6 text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white text-lg group-hover:text-purple-400 transition-colors">Página Web</h3>
+                                        <p className="text-gray-400">ctnradio.com.py</p>
+                                    </div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -173,6 +183,46 @@ const Contacto = () => {
                     </div>
                 </div>
             </section>
+
+            {/* TARJETA DISEÑADOR WEB — RHO Producciones */}
+            <footer className="pt-8 border-t border-white/5">
+                <div className="max-w-md mx-auto">
+                    <div className="relative rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] px-6 py-5 transition-all duration-500 hover:bg-white/[0.06] hover:border-white/[0.12] group">
+                        <div className="flex items-center gap-4">
+                            {/* Logo RHO */}
+                            <div className="w-10 h-10 shrink-0 rounded-xl bg-white/[0.06] p-1.5 flex items-center justify-center group-hover:bg-white/[0.1] transition-colors">
+                                <img src="/rho-logo.png" alt="RHO Producciones" className="w-full h-full object-contain opacity-60 group-hover:opacity-90 transition-opacity" />
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-semibold mb-0.5">Diseño y Desarrollo Web</p>
+                                <p className="text-sm font-bold text-white/50 group-hover:text-white/70 transition-colors">RHO Producciones</p>
+                            </div>
+
+                            {/* Links */}
+                            <div className="flex items-center gap-2 shrink-0">
+                                <a 
+                                    href="mailto:rhoproducciones@gmail.com" 
+                                    title="rhoproducciones@gmail.com"
+                                    className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/25 hover:text-white/60 hover:bg-white/[0.08] transition-all"
+                                >
+                                    <Mail className="w-3.5 h-3.5" />
+                                </a>
+                                <a 
+                                    href="https://wa.me/595976778593" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    title="WhatsApp RHO Producciones"
+                                    className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/25 hover:text-green-400/70 hover:bg-green-500/[0.08] transition-all"
+                                >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };

@@ -267,7 +267,6 @@ export const AudioProvider = ({ children }) => {
             const timestamp = Date.now();
             const separator = streamUrl.includes('?') ? '&' : '?';
             audio.src = `${streamUrl}${separator}_t=${timestamp}`;
-            audio.load();
 
             audio.play()
                 .then(() => {
@@ -395,7 +394,6 @@ export const AudioProvider = ({ children }) => {
 
         if (baseCurrentSrc !== baseStreamUrl) {
             audio.src = streamUrl;
-            audio.load();
             if (wasPlaying) {
                 // Reconexión silenciosa al cambiar de stream
                 audio.play().then(() => {
@@ -472,7 +470,6 @@ export const AudioProvider = ({ children }) => {
                 const timestamp = Date.now();
                 const separator = streamUrl.includes('?') ? '&' : '?';
                 audio.src = `${streamUrl}${separator}_t=${timestamp}`;
-                audio.load();
             }
 
             audio.play()
