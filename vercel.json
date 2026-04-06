@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/stream",
-            "destination": "http://136.248.117.199/listen/ctn-radio/radio.mp3"
+            "destination": "http://136.248.117.199/radio.mp3"
         },
         {
             "source": "/api/oyentes",
