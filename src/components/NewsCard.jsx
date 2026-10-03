@@ -1,55 +1,66 @@
 import { Link } from 'react-router-dom';
-import { Calendar, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 const NewsCard = ({ noticia }) => {
-    const imagenUrl = noticia.imagenUrl || 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+    const imagenUrl = noticia.imagenUrl || 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=800&q=80';
 
-    let fechaFormat = "";
+    let fechaFormat = "Reciente";
     if (noticia.fecha) {
         const dateObj = noticia.fecha.toDate ? noticia.fecha.toDate() : new Date(noticia.fecha);
         fechaFormat = dateObj.toLocaleDateString('es-PY', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     return (
-        <Link to={`/noticias/${noticia.id}`} className="block group">
-            <article className="glass-card rounded-2xl overflow-hidden h-full transition-all duration-400 hover:-translate-y-1 hover:shadow-xl">
-                {/* Imagen */}
-                <div className="relative aspect-[16/10] overflow-hidden">
+        <Link to={`/noticias/${noticia.id}`} className="block group h-full">
+            <article className="glass-card rounded-3xl overflow-hidden h-full flex flex-col border border-[var(--card-border)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                {/* Portada del Artículo */}
+                <div className="relative aspect-[16/10] overflow-hidden bg-zinc-900">
                     <img
                         src={imagenUrl}
                         alt={noticia.titulo}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
-                    {noticia.categoria && (
-                        <div className="absolute top-3 left-3">
-                            <span className="bg-accent-red text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-lg shadow-accent-red/20">
-                                {noticia.categoria}
-                            </span>
-                        </div>
-                    )}
-                    
-                    {/* Flecha de "ver más" que aparece en hover */}
-                    <div className="absolute top-3 right-3 w-8 h-8 bg-white/15 backdrop-blur-xl rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                    {/* Botón flotante discreto en hover */}
+                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <ArrowUpRight className="w-4 h-4 text-white" />
                     </div>
                 </div>
 
-                {/* Contenido */}
-                <div className="p-5">
-                    <div className="flex items-center gap-1.5 text-[var(--text-muted)] text-[11px] font-semibold mb-2.5">
-                        <Calendar className="w-3 h-3" />
-                        {fechaFormat || "Reciente"}
+                {/* Contenido Editorial con Zero-Pill Metadata */}
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                        {/* Metadatos tipográficos limpios */}
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-2.5 font-medium">
+                            <span className="tabular-nums">{fechaFormat}</span>
+                            {noticia.categoria && (
+                                <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="text-accent-red font-semibold">{noticia.categoria}</span>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Título */}
+                        <h3 className="text-base sm:text-lg font-title font-bold text-[var(--text-main)] mb-2 line-clamp-2 leading-snug group-hover:text-accent-red transition-colors">
+                            {noticia.titulo}
+                        </h3>
+
+                        {/* Resumen */}
+                        {noticia.resumen && (
+                            <p className="text-xs sm:text-sm text-[var(--text-muted)] line-clamp-2 leading-relaxed">
+                                {noticia.resumen}
+                            </p>
+                        )}
                     </div>
 
-                    <h3 className="text-base font-bold font-title text-[var(--text-main)] mb-2 line-clamp-2 leading-snug group-hover:text-accent-red transition-colors">
-                        {noticia.titulo}
-                    </h3>
-
-                    <p className="text-[var(--text-muted)] text-[13px] line-clamp-2 leading-relaxed">
-                        {noticia.resumen}
-                    </p>
+                    <div className="mt-5 pt-3 border-t border-[var(--card-border)] flex items-center justify-between text-xs font-semibold text-accent-red">
+                        <span>Leer artículo</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </div>
                 </div>
             </article>
         </Link>

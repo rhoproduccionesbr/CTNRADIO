@@ -144,7 +144,7 @@ class ChatService {
     try {
       const res = await fetch(`${CHAT_API_URL}/status`);
       return await res.json();
-    } catch (err) {
+    } catch {
       return { status: 'offline', connections: 0 };
     }
   }

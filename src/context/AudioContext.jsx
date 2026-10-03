@@ -21,12 +21,10 @@ function detectarProgramaActual(programas) {
     }) || null;
 }
 
-// ===================================================================
-// Umbral: cuántos intentos SILENCIOSOS antes de molestar al usuario
-// ===================================================================
-const SILENT_RETRIES = 4;        // 4 intentos sin mostrar nada
+// Umbrales de Reconexión
+const SILENT_RETRIES = 4;        // 4 intentos sin alterar la UI
 const MAX_RECONNECT_WAIT = 15000; // 15s máximo entre intentos
-const STALLED_GRACE = 6000;       // 6s de gracia antes de reconectar por stalled
+const STALLED_GRACE = 5000;       // 5s de gracia antes de reconectar por stalled
 
 export const AudioProvider = ({ children }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -39,6 +37,11 @@ export const AudioProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [streamQuality, setStreamQuality] = useState('good');
+    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+    // Sleep Timer (Temporizador de Apagado)
+    const [sleepTimerMinutes, setSleepTimerMinutes] = useState(null); // null, 15, 30, 45, 60
+    const [sleepRemainingSeconds, setSleepRemainingSeconds] = useState(0);
 
     const [audioData, setAudioData] = useState(1);
     const [frequencyBars, setFrequencyBars] = useState(new Array(20).fill(0));
@@ -53,9 +56,10 @@ export const AudioProvider = ({ children }) => {
     const fadeIntervalRef = useRef(null);
     const stalledTimeoutRef = useRef(null);
     const intentionalPause = useRef(false);
-    const hasEverPlayed = useRef(false);
     const bufferHealthRef = useRef(null);
     const waitingTimerRef = useRef(null);
+    const sleepTimerIntervalRef = useRef(null);
+    const preFadeVolumeRef = useRef(0.8);
 
     const FALLBACK_STREAM_URL = "/api/stream";
 
@@ -79,7 +83,7 @@ export const AudioProvider = ({ children }) => {
     };
 
     // ===================================================================
-    // 1. Config de stream desde Firestore
+    // 1. Configuración de stream desde Firestore
     // ===================================================================
     useEffect(() => {
         let unsub = () => {};
@@ -115,7 +119,7 @@ export const AudioProvider = ({ children }) => {
         };
         loadConfig();
         return () => unsub();
-    }, []);
+    }, [streamUrl]);
 
     // ===================================================================
     // 2. Cargar programación
@@ -125,7 +129,7 @@ export const AudioProvider = ({ children }) => {
             try {
                 const snapshot = await getDocs(query(collection(db, 'programacion')));
                 setProgramas(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-            } catch {}
+            } catch { /* silent */ }
         };
         cargar();
     }, []);
@@ -138,7 +142,7 @@ export const AudioProvider = ({ children }) => {
             if (programaManual) { setProgramaEnVivo(programaManual); return; }
             if (programas.length > 0) {
                 const prog = detectarProgramaActual(programas);
-                setProgramaEnVivo(prog ? prog.nombre_programa : 'CTN Radio en Vivo');
+                setProgramaEnVivo(prog ? (prog.nombre_programa || prog.titulo) : 'CTN Radio en Vivo');
             } else {
                 setProgramaEnVivo('CTN Radio en Vivo');
             }
@@ -149,7 +153,7 @@ export const AudioProvider = ({ children }) => {
     }, [programas, programaManual]);
 
     // ===================================================================
-    // Web Audio API — Visualizador
+    // Web Audio API — Visualizador con blindaje iOS
     // ===================================================================
     const setupAudioContext = useCallback(() => {
         const audio = getAudio();
@@ -163,18 +167,24 @@ export const AudioProvider = ({ children }) => {
                 sourceRef.current = audioContextRef.current.createMediaElementSource(audio);
                 sourceRef.current.connect(analyserRef.current);
                 analyserRef.current.connect(audioContextRef.current.destination);
-            } catch {}
+            } catch {
+                // Fallback silencioso si el navegador o iOS restringe AudioContext
+            }
         }
-        if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
+        if (audioContextRef.current?.state === 'suspended') {
+            audioContextRef.current.resume().catch(() => {});
+        }
     }, [getAudio]);
 
     const lastFrameRef = useRef(0);
+    const analyzeAudioRef = useRef(null);
+
     const analyzeAudio = useCallback((timestamp) => {
         if (!analyserRef.current) return;
         
-        // Throttle to ~24fps (cada 42ms) — imperceptible pero ahorra 60% CPU
+        // Throttle a ~24fps (cada 42ms)
         if (timestamp - lastFrameRef.current < 42) {
-            animationRef.current = requestAnimationFrame(analyzeAudio);
+            animationRef.current = requestAnimationFrame((ts) => analyzeAudioRef.current?.(ts));
             return;
         }
         lastFrameRef.current = timestamp;
@@ -196,21 +206,24 @@ export const AudioProvider = ({ children }) => {
             newBars[i] = Math.max(5, (sum / barsPerGroup / 255) * 100);
         }
         setFrequencyBars(newBars);
-        animationRef.current = requestAnimationFrame(analyzeAudio);
+        animationRef.current = requestAnimationFrame((ts) => analyzeAudioRef.current?.(ts));
     }, []);
 
     useEffect(() => {
+        analyzeAudioRef.current = analyzeAudio;
+    }, [analyzeAudio]);
+
+    useEffect(() => {
         if (isPlaying && !isBuffering) {
-            animationRef.current = requestAnimationFrame(analyzeAudio);
+            animationRef.current = requestAnimationFrame((ts) => analyzeAudioRef.current?.(ts));
         } else {
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
-            if (!isPlaying) { setAudioData(1); setFrequencyBars(new Array(16).fill(0)); }
         }
         return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-    }, [isPlaying, isBuffering, analyzeAudio]);
+    }, [isPlaying, isBuffering]);
 
     // ===================================================================
-    // Fade-in logarítmico
+    // Fade-in logarítmico suave
     // ===================================================================
     const performFadeIn = useCallback(() => {
         const audio = getAudio();
@@ -237,10 +250,10 @@ export const AudioProvider = ({ children }) => {
     }, [volume, getAudio]);
 
     // ===================================================================
-    // RECONEXIÓN SILENCIOSA
-    // Los primeros N intentos son 100% invisibles para el usuario.
-    // Solo tras SILENT_RETRIES fallos se muestra feedback.
+    // Reconexión silenciosa y adaptativa
     // ===================================================================
+    const attemptReconnectRef = useRef(null);
+
     const attemptReconnect = useCallback((reason, waitMs) => {
         const audio = getAudio();
         if (!audio || !streamUrl || intentionalPause.current) return;
@@ -253,13 +266,11 @@ export const AudioProvider = ({ children }) => {
 
         console.log(`[CTN Audio] Reconectando (${reason}) — intento ${attempt}${isSilent ? ' [silencioso]' : ''}, espera ${waitMs}ms`);
 
-        // Solo mostrar UI de reconexión DESPUÉS de agotar intentos silenciosos
         if (!isSilent) {
             setStreamQuality('reconnecting');
             setIsBuffering(true);
-            setError(`Reconectando señal (intento ${attempt - SILENT_RETRIES})...`);
+            setError(`Reconectando señal en vivo...`);
         }
-        // Intentos silenciosos: no cambiar nada en la UI
 
         reconnectTimeoutRef.current = setTimeout(() => {
             if (intentionalPause.current || !isPlaying) return;
@@ -267,10 +278,10 @@ export const AudioProvider = ({ children }) => {
             const timestamp = Date.now();
             const separator = streamUrl.includes('?') ? '&' : '?';
             audio.src = `${streamUrl}${separator}_t=${timestamp}`;
+            audio.load();
 
             audio.play()
                 .then(() => {
-                    console.log(`[CTN Audio] ✅ Reconexión exitosa (intento ${attempt})`);
                     setError(null);
                     setStreamQuality('good');
                     setIsBuffering(false);
@@ -278,37 +289,119 @@ export const AudioProvider = ({ children }) => {
                     performFadeIn();
                 })
                 .catch(() => {
-                    const nextWait = Math.min(waitMs * 1.4, MAX_RECONNECT_WAIT);
-
-                    // Si ya superó los silenciosos, mostrar cuenta regresiva
+                    const nextWait = Math.min(waitMs * 1.35, MAX_RECONNECT_WAIT);
                     if (!isSilent) {
-                        setError(`Reintentando en ${Math.round(nextWait / 1000)}s...`);
+                        setError(`Reintentando conexión...`);
                         setStreamQuality('weak');
                     }
-
-                    // Seguir reintentando automáticamente
-                    attemptReconnect(reason, nextWait);
+                    attemptReconnectRef.current?.(reason, nextWait);
                 });
         }, waitMs);
     }, [streamUrl, isPlaying, getAudio, performFadeIn]);
 
+    useEffect(() => {
+        attemptReconnectRef.current = attemptReconnect;
+    }, [attemptReconnect]);
+
     // ===================================================================
-    // Event listeners del audio element
+    // Detección de Eventos de Red (Online / Offline)
+    // ===================================================================
+    useEffect(() => {
+        const handleOnline = () => {
+            console.log('[CTN Audio] Red restablecida — Reanudando señal...');
+            setIsOnline(true);
+            if (isPlaying && !intentionalPause.current) {
+                attemptReconnect('network-online', 300);
+            }
+        };
+
+        const handleOffline = () => {
+            console.log('[CTN Audio] Sin conexión de red');
+            setIsOnline(false);
+            setStreamQuality('weak');
+            setError('Sin conexión a Internet. Esperando señal...');
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [isPlaying, attemptReconnect]);
+
+    // ===================================================================
+    // Sleep Timer (Temporizador de Apagado con Fade-Out)
+    // ===================================================================
+    const startSleepTimer = useCallback((minutes) => {
+        if (!minutes || minutes <= 0) {
+            if (sleepTimerIntervalRef.current) clearInterval(sleepTimerIntervalRef.current);
+            sleepTimerIntervalRef.current = null;
+            setSleepTimerMinutes(null);
+            setSleepRemainingSeconds(0);
+            return;
+        }
+
+        if (sleepTimerIntervalRef.current) clearInterval(sleepTimerIntervalRef.current);
+        const totalSeconds = minutes * 60;
+        setSleepTimerMinutes(minutes);
+        setSleepRemainingSeconds(totalSeconds);
+        preFadeVolumeRef.current = volume;
+    }, [volume]);
+
+    useEffect(() => {
+        if (sleepTimerMinutes === null) return;
+
+        sleepTimerIntervalRef.current = setInterval(() => {
+            setSleepRemainingSeconds(prev => {
+                if (prev <= 1) {
+                    // Tiempo cumplido: Pausar transmisión
+                    clearInterval(sleepTimerIntervalRef.current);
+                    sleepTimerIntervalRef.current = null;
+                    setSleepTimerMinutes(null);
+                    
+                    const audio = getAudio();
+                    if (audio) {
+                        audio.pause();
+                        audio.volume = preFadeVolumeRef.current;
+                    }
+                    setIsPlaying(false);
+                    return 0;
+                }
+
+                // Desvanecimiento suave en los últimos 15 segundos
+                if (prev <= 15) {
+                    const audio = getAudio();
+                    if (audio) {
+                        const factor = prev / 15;
+                        audio.volume = Math.max(0.02, preFadeVolumeRef.current * factor);
+                    }
+                }
+
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            if (sleepTimerIntervalRef.current) clearInterval(sleepTimerIntervalRef.current);
+        };
+    }, [sleepTimerMinutes, getAudio]);
+
+    // ===================================================================
+    // Event listeners del elemento <audio>
     // ===================================================================
     useEffect(() => {
         const audio = getAudio();
 
-        // --- Buffering: solo mostrar si dura > 2 segundos ---
-        // Micro-buffers normales no molestan al usuario
         const onWaiting = () => {
             if (!isPlaying || intentionalPause.current) return;
-            // Esperar 2s antes de mostrar indicador de buffering
             if (waitingTimerRef.current) clearTimeout(waitingTimerRef.current);
             waitingTimerRef.current = setTimeout(() => {
                 if (isPlaying && !intentionalPause.current) {
                     setIsBuffering(true);
                 }
-            }, 2000);
+            }, 1800);
         };
 
         const onCanPlay = () => {
@@ -324,37 +417,32 @@ export const AudioProvider = ({ children }) => {
             setError(null);
         };
 
-        // --- Error de red/stream ---
         const onError = () => {
             if (!isPlaying || intentionalPause.current) return;
-            attemptReconnect('error', 2000);
+            attemptReconnect('error', 1500);
         };
 
-        // --- AutoDJ → Live switch ---
         const onEnded = () => {
             if (!isPlaying || intentionalPause.current) return;
-            attemptReconnect('autodj-switch', 1200);
+            attemptReconnect('stream-ended', 1000);
         };
 
-        // --- Stalled: datos dejaron de llegar ---
         const onStalled = () => {
             if (!isPlaying || intentionalPause.current) return;
             if (stalledTimeoutRef.current) clearTimeout(stalledTimeoutRef.current);
             stalledTimeoutRef.current = setTimeout(() => {
                 if (audio.readyState < 3 && isPlaying && !intentionalPause.current) {
-                    attemptReconnect('stalled', 1500);
+                    attemptReconnect('stalled', 1200);
                 }
             }, STALLED_GRACE);
         };
 
-        // --- Monitoreo de buffer health (silencioso) ---
         const onTimeUpdate = () => {
             if (!audio.buffered.length) return;
             const bufferEnd = audio.buffered.end(audio.buffered.length - 1);
             const bufferHealth = bufferEnd - audio.currentTime;
             bufferHealthRef.current = bufferHealth;
 
-            // Solo cambiar calidad visual, sin interrumpir ni reconectar
             if (bufferHealth < 2 && isPlaying) setStreamQuality('weak');
             else if (bufferHealth > 4 && isPlaying) setStreamQuality('good');
         };
@@ -381,7 +469,7 @@ export const AudioProvider = ({ children }) => {
     }, [isPlaying, attemptReconnect, getAudio]);
 
     // ===================================================================
-    // Manejar cambio de URL del stream
+    // Manejar cambio dinámico de URL del stream
     // ===================================================================
     useEffect(() => {
         if (!streamUrl) return;
@@ -395,7 +483,6 @@ export const AudioProvider = ({ children }) => {
         if (baseCurrentSrc !== baseStreamUrl) {
             audio.src = streamUrl;
             if (wasPlaying) {
-                // Reconexión silenciosa al cambiar de stream
                 audio.play().then(() => {
                     performFadeIn();
                     setIsBuffering(false);
@@ -405,9 +492,9 @@ export const AudioProvider = ({ children }) => {
                 });
             }
         }
-    }, [streamUrl, getAudio, performFadeIn]);
+    }, [streamUrl, isPlaying, getAudio, performFadeIn]);
 
-    // Volumen sync
+    // Sincronización de Volumen
     useEffect(() => {
         const audio = getAudio();
         if (!fadeIntervalRef.current) audio.volume = volume;
@@ -423,27 +510,7 @@ export const AudioProvider = ({ children }) => {
     }, [volume, getAudio]);
 
     // ===================================================================
-    // Media Session API
-    // ===================================================================
-    useEffect(() => {
-        if ('mediaSession' in navigator && isPlaying) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: programaEnVivo || 'CTN Radio en Vivo',
-                artist: 'CTN Radio',
-                album: 'Transmisión Online',
-                artwork: [
-                    { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
-                    { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
-                ]
-            });
-            navigator.mediaSession.setActionHandler('play', () => togglePlay());
-            navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-            navigator.mediaSession.setActionHandler('stop', () => { if (isPlaying) togglePlay(); });
-        }
-    }, [isPlaying, programaEnVivo]);
-
-    // ===================================================================
-    // Control principal — INICIO LIMPIO sin mensajes
+    // Control Principal — CON PURGA DE BUFFER EN VIVO
     // ===================================================================
     const togglePlay = useCallback(() => {
         if (!streamUrl) return;
@@ -451,26 +518,26 @@ export const AudioProvider = ({ children }) => {
         setupAudioContext();
 
         if (isPlaying) {
-            // PAUSA
+            // Pausar
             intentionalPause.current = true;
             audio.pause();
             setIsPlaying(false);
             setIsBuffering(false);
             setStreamQuality('good');
             setError(null);
+            setAudioData(1);
+            setFrequencyBars(new Array(16).fill(0));
             if (reconnectTimeoutRef.current) { clearTimeout(reconnectTimeoutRef.current); reconnectTimeoutRef.current = null; }
             if (stalledTimeoutRef.current) { clearTimeout(stalledTimeoutRef.current); stalledTimeoutRef.current = null; }
             reconnectAttemptsRef.current = 0;
         } else {
-            // PLAY — inicio limpio, sin "conectando"
+            // Reproducir — PURGA TOTAL DE BUFFER VIEJO:
+            // Siempre se inyecta un nuevo timestamp y audio.load() para garantizar señal 100% en vivo
             intentionalPause.current = false;
-            // NO setIsBuffering(true) aquí — dejamos la UI limpia hasta que sea necesario
-
-            if (audio.readyState === 0 || audio.error || !hasEverPlayed.current) {
-                const timestamp = Date.now();
-                const separator = streamUrl.includes('?') ? '&' : '?';
-                audio.src = `${streamUrl}${separator}_t=${timestamp}`;
-            }
+            const timestamp = Date.now();
+            const separator = streamUrl.includes('?') ? '&' : '?';
+            audio.src = `${streamUrl}${separator}_t=${timestamp}`;
+            audio.load();
 
             audio.play()
                 .then(() => {
@@ -479,24 +546,42 @@ export const AudioProvider = ({ children }) => {
                     setError(null);
                     setStreamQuality('good');
                     reconnectAttemptsRef.current = 0;
-                    hasEverPlayed.current = true;
                     performFadeIn();
                 })
                 .catch(err => {
                     if (err.name === 'NotAllowedError') {
-                        // Requiere gesto del usuario — no mostrar error, reintentar automático
                         setIsPlaying(false);
                         setIsBuffering(false);
                     } else {
-                        // Error real — intentar reconexión silenciosa
-                        setIsPlaying(true); // Mantener estado de "playing" para que el motor reconecte
-                        attemptReconnect('play-failed', 2000);
+                        setIsPlaying(true);
+                        attemptReconnect('play-retry', 1000);
                     }
                 });
         }
     }, [streamUrl, isPlaying, getAudio, setupAudioContext, performFadeIn, attemptReconnect]);
 
-    // Cleanup
+    // ===================================================================
+    // Media Session API (Bloqueo de pantalla y notificaciones OS)
+    // ===================================================================
+    useEffect(() => {
+        if ('mediaSession' in navigator && isPlaying) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: programaEnVivo || 'CTN Radio en Vivo',
+                artist: 'CTN Radio 24/7',
+                album: 'Guarambaré, Paraguay',
+                artwork: [
+                    { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
+                    { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/splash-icon.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+            navigator.mediaSession.setActionHandler('play', togglePlay);
+            navigator.mediaSession.setActionHandler('pause', togglePlay);
+            navigator.mediaSession.setActionHandler('stop', () => { if (isPlaying) togglePlay(); });
+        }
+    }, [isPlaying, programaEnVivo, togglePlay]);
+
+    // Limpieza global al desmontar
     useEffect(() => {
         return () => {
             if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
@@ -504,14 +589,19 @@ export const AudioProvider = ({ children }) => {
             if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
             if (animationRef.current) cancelAnimationFrame(animationRef.current);
             if (waitingTimerRef.current) clearTimeout(waitingTimerRef.current);
+            if (sleepTimerIntervalRef.current) clearInterval(sleepTimerIntervalRef.current);
         };
     }, []);
+
+    const getAnalyser = useCallback(() => analyserRef.current, []);
 
     return (
         <AudioContext.Provider value={{
             isPlaying, isBuffering, togglePlay, volume, setVolume,
             streamUrl, programaEnVivo, isLoading, error,
-            audioData, frequencyBars, streamQuality,
+            audioData, frequencyBars, streamQuality, isOnline,
+            sleepTimerMinutes, sleepRemainingSeconds, startSleepTimer,
+            getAnalyser, analyserRef
         }}>
             {children}
         </AudioContext.Provider>

@@ -8,6 +8,8 @@ const PWAInstallPrompt = () => {
     useEffect(() => {
         // Escuchar el evento que indica que la PWA se puede instalar
         const handleBeforeInstallPrompt = (e) => {
+            // Si ya está instalada o es standalone, no mostramos nada
+            if (window.matchMedia('(display-mode: standalone)').matches) return;
             // Prevenir la mini-infobar predeterminada
             e.preventDefault();
             // Guardar el evento para dispararlo luego
@@ -17,11 +19,6 @@ const PWAInstallPrompt = () => {
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // Si ya está instalada o es standalone, no mostramos nada
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            setShowPrompt(false);
-        }
 
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);

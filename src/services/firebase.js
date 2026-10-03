@@ -4,13 +4,13 @@ import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDckxi6pdWyXtDEfSebOuCEKzfRTi56aqQ",
-    authDomain: "serverccpyradio.firebaseapp.com",
-    projectId: "serverccpyradio",
-    storageBucket: "serverccpyradio.firebasestorage.app",
-    messagingSenderId: "667905363599",
-    appId: "1:667905363599:web:8482fac36b6f3e45992afa",
-    measurementId: "G-CN9SM7H53N"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDckxi6pdWyXtDEfSebOuCEKzfRTi56aqQ",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "serverccpyradio.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "serverccpyradio",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "serverccpyradio.firebasestorage.app",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "667905363599",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:667905363599:web:8482fac36b6f3e45992afa",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-CN9SM7H53N"
 };
 
 // Initialize Firebase

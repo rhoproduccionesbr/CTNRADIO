@@ -2,10 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Función helper para verificar si el usuario está logueado como administrador
-    // (Ajustar esta lógica más adelante si se crea un rol específico 'admin' en Firestore)
-    function isAuthenticated() {
-      return request.auth != null;
+    // Función helper para verificar si el usuario es administrador autenticado (no anónimo)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
     // Colección: configuracion (URL del stream, etc)

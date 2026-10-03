@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '../context/ChatContext';
 import { useAudio } from '../context/AudioContext';
 import { Send, Wifi, WifiOff, Users, MessageCircle, ChevronDown, X, MapPin, Heart, ShieldCheck, Smile, Radio } from 'lucide-react';
@@ -87,20 +88,36 @@ const ChatModal = ({ isOpen, onClose }) => {
     return nameColors[Math.abs(hash) % nameColors.length];
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div 
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div 
-        className="w-full h-[85vh] sm:h-auto sm:max-h-[80vh] max-w-md bg-[#0d0d12] sm:rounded-3xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative border border-white/[0.06] animate-slide-in-bottom mb-[3.8rem] sm:mb-0"
-        onClick={e => e.stopPropagation()}
-      >
-        
-        {/* ===== HEADER ===== */}
-        <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border-b border-white/[0.06] shrink-0">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <motion.div 
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.05, bottom: 0.7 }}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.y > 110 || velocity.y > 400) onClose();
+            }}
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            className="w-full h-[85vh] sm:h-auto sm:max-h-[80vh] max-w-md bg-[#0d0d12] sm:rounded-3xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative border border-white/[0.06] mb-[3.8rem] sm:mb-0"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Tirador táctil para deslizar hacia abajo en móviles */}
+            <div className="w-12 h-1 rounded-full bg-white/20 mx-auto mt-2 sm:hidden shrink-0" />
+            
+            {/* ===== HEADER ===== */}
+            <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border-b border-white/[0.06] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-accent-red/10 flex items-center justify-center shrink-0">
               <MessageCircle className="w-4.5 h-4.5 text-accent-red" />
@@ -327,9 +344,11 @@ const ChatModal = ({ isOpen, onClose }) => {
             </>
           )}
         </div>
-      </div>
-    </div>
-  );
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+);
 };
 
 export default ChatModal;

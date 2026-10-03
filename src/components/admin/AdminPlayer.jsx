@@ -1,8 +1,14 @@
 import { useAudio } from '../../context/AudioContext';
-import { Play, Square, Volume2 } from 'lucide-react';
+import { Play, Square } from 'lucide-react';
+
+const BARS_CONFIG = [
+    { height: '10px', animation: 'pulse 0.6s ease-in-out infinite alternate' },
+    { height: '16px', animation: 'pulse 0.8s ease-in-out infinite alternate' },
+    { height: '12px', animation: 'pulse 0.5s ease-in-out infinite alternate' },
+];
 
 const AdminPlayer = () => {
-    const { isPlaying, togglePlay, currentProgram, volume, changeVolume } = useAudio();
+    const { isPlaying, togglePlay, currentProgram } = useAudio();
 
     return (
         <div className="bg-[var(--primary)] text-[var(--text-main)] border border-[var(--card-border)] p-3 rounded-xl flex items-center shadow-sm w-full gap-3 mt-4">
@@ -18,13 +24,13 @@ const AdminPlayer = () => {
             </div>
             {isPlaying && (
                 <div className="flex items-end space-x-1 justify-center w-6 h-6 shrink-0">
-                    {[1, 2, 3].map(i => (
+                    {BARS_CONFIG.map((bar, i) => (
                         <div 
                             key={i} 
                             className="w-1 bg-accent-red rounded-t-sm"
                             style={{
-                                height: `${Math.max(4, Math.random() * 16)}px`,
-                                animation: `pulse ${0.5 + Math.random() * 0.5}s ease-in-out infinite alternate`
+                                height: bar.height,
+                                animation: bar.animation
                             }}
                         />
                     ))}

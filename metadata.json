@@ -1,0 +1,7 @@
+{
+  "name": "CTN Radio",
+  "description": "CTN Radio - De Guarambaré al mundo. Emisora digital 24/7 con noticias, programación en vivo, chat comunitario y entretenimiento.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -48,21 +48,68 @@ export default defineConfig({
             purpose: 'any'
           }
         ]
+      },
+      workbox: {
+        navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
+          'vendor-ui': ['lucide-react', 'react-router-dom', 'zustand']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
+  },
   server: {
+    host: '0.0.0.0',
+    port: 3000,
+    allowedHosts: true,
     proxy: {
       '/api/stream': {
         target: 'http://136.248.117.199/radio.mp3',
         changeOrigin: true,
-        rewrite: (path) => '',
+        rewrite: () => '',
         secure: false // Ignorar problemas de certificado con el IP
       },
       '/api/oyentes': {
         target: 'http://136.248.117.199:3001/api/oyentes',
         changeOrigin: true,
-        rewrite: (path) => '',
+        rewrite: () => '',
       },
       '/socket.io/': {
         target: 'http://136.248.117.199:3001',
@@ -70,5 +117,9 @@ export default defineConfig({
         ws: true,
       }
     }
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 3000,
   }
 })

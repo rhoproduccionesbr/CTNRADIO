@@ -2,9 +2,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Función helper para verificar autenticación
-    function isAuthenticated() {
-      return request.auth != null;
+    // Función helper para verificar autenticación de administrador (no anónimo)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
     // Regla general para todos los archivos (imágenes de noticias, logos, etc)
@@ -12,7 +12,7 @@ service firebase.storage {
     // Escritura: Solo administradores autenticados
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
   }
 }
