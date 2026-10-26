@@ -564,20 +564,29 @@ export const AudioProvider = ({ children }) => {
     // Media Session API (Bloqueo de pantalla y notificaciones OS)
     // ===================================================================
     useEffect(() => {
-        if ('mediaSession' in navigator && isPlaying) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: programaEnVivo || 'CTN Radio en Vivo',
-                artist: 'CTN Radio 24/7',
-                album: 'Guarambaré, Paraguay',
-                artwork: [
-                    { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
-                    { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
-                    { src: '/splash-icon.png', sizes: '512x512', type: 'image/png' }
-                ]
-            });
-            navigator.mediaSession.setActionHandler('play', togglePlay);
-            navigator.mediaSession.setActionHandler('pause', togglePlay);
-            navigator.mediaSession.setActionHandler('stop', () => { if (isPlaying) togglePlay(); });
+        if ('mediaSession' in navigator) {
+            if (isPlaying) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: programaEnVivo || 'CTN Radio en Vivo',
+                    artist: 'CTN Radio 24/7 — De Guarambaré al Mundo',
+                    album: 'Emisión en Vivo',
+                    artwork: [
+                        { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
+                        { src: '/splash-icon.png', sizes: '512x512', type: 'image/png' }
+                    ]
+                });
+                navigator.mediaSession.playbackState = 'playing';
+            } else {
+                navigator.mediaSession.playbackState = 'paused';
+            }
+
+            try {
+                navigator.mediaSession.setActionHandler('play', togglePlay);
+                navigator.mediaSession.setActionHandler('pause', togglePlay);
+                navigator.mediaSession.setActionHandler('stop', () => { if (isPlaying) togglePlay(); });
+            } catch (err) {
+                // Ignore fallback for unsupported handlers
+            }
         }
     }, [isPlaying, programaEnVivo, togglePlay]);
 

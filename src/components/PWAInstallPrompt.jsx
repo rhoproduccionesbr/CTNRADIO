@@ -8,8 +8,11 @@ const PWAInstallPrompt = () => {
     useEffect(() => {
         // Escuchar el evento que indica que la PWA se puede instalar
         const handleBeforeInstallPrompt = (e) => {
-            // Si ya está instalada o es standalone, no mostramos nada
-            if (window.matchMedia('(display-mode: standalone)').matches) return;
+            // Si ya está instalada, es standalone o está dentro de la App Android nativa (TWA)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isAndroidApp = document.referrer.includes('android-app://');
+            if (isStandalone || isAndroidApp) return;
+
             // Prevenir la mini-infobar predeterminada
             e.preventDefault();
             // Guardar el evento para dispararlo luego
