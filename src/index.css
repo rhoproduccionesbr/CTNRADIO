@@ -190,8 +190,13 @@
 .animation-delay-400 { animation-delay: 400ms; }
 .animation-delay-500 { animation-delay: 500ms; }
 
-/* Safe area for iPhone */
-.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* Safe area for Android navigation bars & iPhone home indicator */
+.pb-safe { 
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px); 
+}
+.pt-safe { 
+  padding-top: max(env(safe-area-inset-top, 0px), 10px); 
+}
 
 /* Hide scrollbar */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

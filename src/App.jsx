@@ -12,6 +12,7 @@ const Contacto = lazy(() => import('./pages/Contacto'));
 const NewsPortal = lazy(() => import('./pages/NewsPortal'));
 const NewsDetail = lazy(() => import('./pages/NewsDetail'));
 const GaleriaPublica = lazy(() => import('./pages/GaleriaPublica'));
+const PoliticasPrivacidad = lazy(() => import('./pages/PoliticasPrivacidad'));
 
 // Rutas de administración diferidas (Code Splitting masivo)
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
@@ -45,6 +46,7 @@ function App() {
                   <Route path="noticias" element={<NewsPortal />} />
                   <Route path="noticias/:id" element={<NewsDetail />} />
                   <Route path="galeria" element={<GaleriaPublica />} />
+                  <Route path="politicas" element={<PoliticasPrivacidad />} />
                 </Route>
 
                 {/* Rutas del Panel de Administración */}

@@ -61,24 +61,7 @@ const Home = () => {
             {/* SECCIÓN HERO — Broadcast Studio Center (1440px max width) */}
             <section className="pt-6 sm:pt-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
                 
-                {/* Kicker Editorial */}
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
-                        <span className="flex items-center gap-1.5 text-accent-red font-bold">
-                            <Radio className="w-3.5 h-3.5" />
-                            <span>CTN RADIO ONLINE</span>
-                        </span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>Guarambaré, Paraguay</span>
-                        </span>
-                    </div>
 
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                        <span>Frecuencia Digital 24/7</span>
-                    </div>
-                </div>
 
                 {/* Grid Principal: Consola de Emisión (7 col) + Side Panel (5 col) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
@@ -88,8 +71,8 @@ const Home = () => {
                         <HeroPlayer contacto={contacto} galeria={galeria} />
                     </div>
 
-                    {/* Panel de Estudio Lateral: Programa al aire + Chat Comunitario */}
-                    <div className="lg:col-span-5 xl:col-span-4">
+                    {/* Panel de Estudio Lateral: Programa al aire + Chat Comunitario (solo pantallas grandes) */}
+                    <div className="hidden lg:block lg:col-span-5 xl:col-span-4">
                         <StudioSidePanel 
                             programas={programas} 
                             contacto={contacto} 
@@ -177,8 +160,8 @@ const Home = () => {
                 </section>
             )}
 
-            {/* SECCIÓN INSTITUCIONAL & EMISORA */}
-            <section className="mt-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+            {/* SECCIÓN INSTITUCIONAL & EMISORA (solo pantallas grandes) */}
+            <section className="hidden lg:block mt-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
                 <div className="glass-card rounded-3xl p-8 sm:p-10 border border-[var(--card-border)] flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="max-w-2xl">
                         <span className="text-xs font-bold uppercase tracking-wider text-accent-red block mb-2">

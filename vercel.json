@@ -1,24 +1,46 @@
 {
-    "rewrites": [
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/stream",
+      "destination": "http://136.248.117.199/radio.mp3"
+    },
+    {
+      "source": "/api/oyentes",
+      "destination": "http://136.248.117.199:3001/api/oyentes"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "http://136.248.117.199:3001/socket.io/$1"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "http://136.248.117.199:3001/socket.io/"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
         {
-            "source": "/api/stream",
-            "destination": "http://136.248.117.199/radio.mp3"
-        },
-        {
-            "source": "/api/oyentes",
-            "destination": "http://136.248.117.199:3001/api/oyentes"
-        },
-        {
-            "source": "/socket.io/(.*)",
-            "destination": "http://136.248.117.199:3001/socket.io/$1"
-        },
-        {
-            "source": "/socket.io",
-            "destination": "http://136.248.117.199:3001/socket.io/"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
-    ]
+      ]
+    },
+    {
+      "source": "/(sw.js|registerSW.js|manifest.webmanifest)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
 }

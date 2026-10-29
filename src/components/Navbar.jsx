@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, Radio, Info, Image, Newspaper, Calendar, Loader2, Play, Pause, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon, Radio, Info, Image, Newspaper, Calendar, Menu, X, Maximize2, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useAudio } from '../context/AudioContext';
 import StudioAmbientMode from './StudioAmbientMode';
 
 const Navbar = () => {
     const { theme, toggleTheme } = useTheme();
-    const { isPlaying, isBuffering, togglePlay } = useAudio();
     const [isAmbientOpen, setIsAmbientOpen] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
 
@@ -32,6 +32,18 @@ const Navbar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Bloquear el scroll del body cuando el menú lateral está abierto
+    useEffect(() => {
+        if (isDrawerOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isDrawerOpen]);
+
     const navLinks = [
         { to: '/', label: 'Inicio', icon: Radio, isCenter: true },
         { to: '/programacion', label: 'Programación', icon: Calendar },
@@ -42,26 +54,23 @@ const Navbar = () => {
 
     return (
         <>
-            {/* ===== TOP NAV — Desktop Contract ===== */}
-            <header className={`fixed top-0 left-0 right-0 z-50 h-16 flex items-center transform-gpu will-change-[background-color,border-color,backdrop-filter] transition-colors duration-200 border-b ${
+            {/* ===== ENCABEZADO SUPERIOR (Más fino, CTN Radio a la izquierda, menú sandwich a la derecha) ===== */}
+            <header className={`fixed top-0 left-0 right-0 z-50 h-13 flex items-center transform-gpu will-change-[background-color,border-color,backdrop-filter] transition-colors duration-200 border-b ${
                 scrolled 
                     ? 'bg-[var(--surface)] backdrop-blur-xl border-[var(--card-border)] shadow-sm' 
-                    : 'bg-transparent border-transparent'
+                    : 'bg-[var(--surface)]/90 backdrop-blur-md border-[var(--card-border)]/60'
             }`}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-11">
+                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-10">
                         
-                        {/* Zone 1: Single text element wordmark */}
-                        <Link to="/" className="flex items-center gap-2.5 group">
-                            <div className="w-8 h-8 rounded-xl bg-accent-red flex items-center justify-center text-white shadow-sm shadow-accent-red/25 transition-transform group-hover:scale-105">
-                                <Radio className="w-4 h-4" />
-                            </div>
-                            <span className="text-xl font-title font-black tracking-tight text-[var(--text-main)]">
-                                CTN<span className="text-accent-red">.</span>RADIO
+                        {/* Lado Superior Izquierdo: Título CTN Radio. más fino */}
+                        <Link to="/" className="flex items-center group">
+                            <span className="text-lg sm:text-xl font-title font-bold tracking-tight text-[var(--text-main)] group-hover:text-accent-red transition-colors">
+                                CTN Radio<span className="text-accent-red">.</span>
                             </span>
                         </Link>
 
-                        {/* Zone 2: 4-6 clean text navigation links */}
+                        {/* Enlaces centrales para pantallas de escritorio */}
                         <nav className="hidden md:flex items-center gap-7">
                             {navLinks.map(link => {
                                 const isActive = location.pathname === link.to;
@@ -69,9 +78,9 @@ const Navbar = () => {
                                     <Link
                                         key={link.to}
                                         to={link.to}
-                                        className={`text-sm font-semibold transition-colors duration-200 relative py-1.5 ${
+                                        className={`text-sm font-medium transition-colors duration-200 relative py-1.5 ${
                                             isActive 
-                                                ? 'text-accent-red' 
+                                                ? 'text-accent-red font-semibold' 
                                                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                                         }`}
                                     >
@@ -84,58 +93,154 @@ const Navbar = () => {
                             })}
                         </nav>
 
-                        {/* Zone 3: Primary Actions (Live Badge & Theme toggle) */}
-                        <div className="flex items-center gap-3">
-                            {/* Interactive Quick Play / Live Control Button */}
-                            <button
-                                onClick={togglePlay}
-                                aria-label={isPlaying ? "Pausar radio" : "Escuchar radio en vivo"}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer ${
-                                    isPlaying 
-                                        ? 'bg-accent-red text-white shadow-sm shadow-accent-red/30' 
-                                        : isBuffering 
-                                            ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' 
-                                            : 'bg-[var(--card-border)] text-[var(--text-main)] hover:bg-[var(--card-border)]/80'
-                                }`}
-                                title={isPlaying ? "Pausar transmisión" : "Reproducir transmisión"}
-                            >
-                                {isBuffering ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : isPlaying ? (
-                                    <Pause className="w-3.5 h-3.5 fill-current" />
-                                ) : (
-                                    <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                                )}
-                                <span className="uppercase text-[10px] tracking-wider font-bold">
-                                    {isBuffering ? 'CONECTANDO' : isPlaying ? 'EN VIVO' : 'ESCUCHAR'}
-                                </span>
-                            </button>
-
-                            {/* Modo Pantalla Completa Trigger */}
+                        {/* Lado Superior Derecho: Botón Menú tipo Sandwich */}
+                        <div className="flex items-center gap-2">
                             <button 
-                                onClick={() => setIsAmbientOpen(true)} 
-                                className="w-9 h-9 hidden sm:flex items-center justify-center rounded-xl hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-accent-red transition-colors active:scale-95"
-                                title="Pantalla Completa / Modo Estudio"
-                                aria-label="Abrir Modo Pantalla Completa"
+                                onClick={() => setIsDrawerOpen(true)}
+                                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-[var(--card-border)]/40 hover:bg-[var(--card-border)] text-[var(--text-main)] transition-colors active:scale-95 border border-[var(--card-border)] cursor-pointer"
+                                aria-label="Abrir menú lateral"
+                                title="Menú"
                             >
-                                <Maximize2 className="w-4 h-4" />
-                            </button>
-
-                            {/* Theme Toggle */}
-                            <button 
-                                onClick={toggleTheme} 
-                                className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors active:scale-95"
-                                aria-label="Alternar tema claro y oscuro"
-                            >
-                                {theme === 'dark' 
-                                    ? <Sun className="w-4 h-4 text-amber-400" /> 
-                                    : <Moon className="w-4 h-4" />
-                                }
+                                <Menu className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
                 </div>
             </header>
+
+            {/* ===== MENÚ LATERAL DESPLEGABLE (DRAWER) ===== */}
+            <AnimatePresence>
+                {isDrawerOpen && (
+                    <>
+                        {/* Fondo difuminado oscuro */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setIsDrawerOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
+                        />
+
+                        {/* Panel lateral que se despliega desde la derecha */}
+                        <motion.aside
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                            className="fixed top-0 right-0 bottom-0 w-72 max-w-[85vw] bg-[var(--surface)] backdrop-blur-2xl border-l border-[var(--card-border)] z-[100] flex flex-col justify-between p-6 shadow-2xl"
+                        >
+                            {/* Parte Superior: Encabezado del menú y enlaces */}
+                            <div>
+                                <div className="flex items-center justify-between pb-4 border-b border-[var(--card-border)]">
+                                    <span className="text-lg font-title font-bold tracking-tight text-[var(--text-main)]">
+                                        CTN Radio<span className="text-accent-red">.</span>
+                                    </span>
+                                    <button
+                                        onClick={() => setIsDrawerOpen(false)}
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors active:scale-95"
+                                        aria-label="Cerrar menú"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {/* Enlaces de las diferentes secciones */}
+                                <nav className="flex flex-col gap-1 mt-6">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-3 mb-2">
+                                        Secciones
+                                    </span>
+                                    {navLinks.map(link => {
+                                        const isActive = location.pathname === link.to;
+                                        return (
+                                            <Link
+                                                key={link.to}
+                                                to={link.to}
+                                                onClick={() => setIsDrawerOpen(false)}
+                                                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition-all ${
+                                                    isActive
+                                                        ? 'bg-accent-red text-white shadow-md shadow-accent-red/25'
+                                                        : 'text-[var(--text-main)] hover:bg-[var(--card-border)]/50'
+                                                }`}
+                                            >
+                                                <link.icon className="w-4 h-4 shrink-0" />
+                                                <span>{link.label}</span>
+                                            </Link>
+                                        );
+                                    })}
+
+                                    {/* Opción Pantalla Completa / Modo Estudio */}
+                                    <button
+                                        onClick={() => {
+                                            setIsDrawerOpen(false);
+                                            setIsAmbientOpen(true);
+                                        }}
+                                        className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-[var(--text-main)] hover:bg-[var(--card-border)]/50 transition-all text-left mt-1 cursor-pointer"
+                                    >
+                                        <Maximize2 className="w-4 h-4 text-accent-red shrink-0" />
+                                        <span>Modo Pantalla Completa</span>
+                                    </button>
+
+                                    {/* Enlace a Políticas de Privacidad */}
+                                    <Link
+                                        to="/politicas"
+                                        onClick={() => setIsDrawerOpen(false)}
+                                        className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold transition-all mt-1 ${
+                                            location.pathname === '/politicas'
+                                                ? 'bg-accent-red text-white shadow-md shadow-accent-red/25'
+                                                : 'text-[var(--text-main)] hover:bg-[var(--card-border)]/50'
+                                        }`}
+                                    >
+                                        <ShieldCheck className={`w-4 h-4 shrink-0 ${location.pathname === '/politicas' ? 'text-white' : 'text-accent-red'}`} />
+                                        <span>Políticas de Privacidad</span>
+                                    </Link>
+                                </nav>
+                            </div>
+
+                            {/* Abajo de todo: Selector de Modo Oscuro o Claro */}
+                            <div className="pt-5 border-t border-[var(--card-border)] flex flex-col gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-1">
+                                    Apariencia
+                                </span>
+                                <button
+                                    onClick={toggleTheme}
+                                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[var(--card-border)]/40 hover:bg-[var(--card-border)]/70 text-[var(--text-main)] transition-all border border-[var(--card-border)] active:scale-98 cursor-pointer"
+                                    aria-label="Alternar tema claro y oscuro"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {theme === 'dark' ? (
+                                            <div className="w-8 h-8 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400">
+                                                <Sun className="w-4 h-4" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                                <Moon className="w-4 h-4" />
+                                            </div>
+                                        )}
+                                        <div className="text-left">
+                                            <div className="text-xs font-bold">
+                                                {theme === 'dark' ? 'Modo Oscuro' : 'Modo Claro'}
+                                            </div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">
+                                                {theme === 'dark' ? 'Activar tema claro' : 'Activar tema oscuro'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Switch Toggle */}
+                                    <div className={`w-10 h-5 rounded-full p-0.5 transition-colors ${
+                                        theme === 'dark' ? 'bg-accent-red' : 'bg-zinc-300 dark:bg-zinc-700'
+                                    }`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                                            theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
+                                        }`} />
+                                    </div>
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Studio Ambient Mode */}
             <StudioAmbientMode isOpen={isAmbientOpen} onClose={() => setIsAmbientOpen(false)} />

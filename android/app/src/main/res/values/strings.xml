@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CTN Radio</string>
+    <string name="title_activity_main">CTN Radio</string>
+    <string name="package_name">com.ctnradio.app</string>
+    <string name="custom_url_scheme">com.ctnradio.app</string>
+</resources>

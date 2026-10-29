@@ -1,9 +1,28 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { db, auth } from '../services/firebase';
 import { doc, onSnapshot, collection, query, getDocs } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 
+const BackgroundAudio = registerPlugin('BackgroundAudio');
+
 const AudioContext = createContext(null);
+
+export const isAppNative = () => {
+    if (typeof window === 'undefined') return false;
+    if (window.AndroidBridge) return true;
+    try {
+        if (Capacitor && typeof Capacitor.isNativePlatform === 'function') {
+            return Capacitor.isNativePlatform();
+        }
+    } catch { /* silent */ }
+    return window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
+};
+
+export const isLocalOrNative = () => {
+    if (typeof window === 'undefined') return false;
+    return isAppNative() || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+};
 
 const DIAS_MAP = {
     'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3,
@@ -61,7 +80,9 @@ export const AudioProvider = ({ children }) => {
     const sleepTimerIntervalRef = useRef(null);
     const preFadeVolumeRef = useRef(0.8);
 
-    const FALLBACK_STREAM_URL = "/api/stream";
+    const DIRECT_STREAM_URL = "http://136.248.117.199/radio.mp3";
+    const FALLBACK_STREAM_URL = typeof window !== 'undefined' && isLocalOrNative()
+        ? DIRECT_STREAM_URL : "/api/stream";
 
     // ===================================================================
     // Audio element lazy init
@@ -69,18 +90,31 @@ export const AudioProvider = ({ children }) => {
     const getAudio = useCallback(() => {
         if (!audioRef.current) {
             const audio = new Audio();
-            audio.preload = 'none';
-            audio.crossOrigin = 'anonymous';
+            audio.preload = 'auto';
+            if (!isLocalOrNative()) {
+                audio.crossOrigin = 'anonymous';
+            }
             audioRef.current = audio;
         }
         return audioRef.current;
     }, []);
 
-    const toSecureUrl = (url) => {
-        if (!url) return '';
+    const toSecureUrl = useCallback((url) => {
+        const nativeOrLocal = isLocalOrNative();
+
+        if (!url) {
+            return nativeOrLocal ? DIRECT_STREAM_URL : "/api/stream";
+        }
+
+        if (nativeOrLocal) {
+            if (url.startsWith('/')) return `https://ctnradio.vercel.app${url}`;
+            if (url.includes('136.248.117.199') || url.startsWith('http://')) return DIRECT_STREAM_URL;
+            return url;
+        }
+
         if (url.includes('136.248.117.199') || url.startsWith('http://')) return '/api/stream';
         return url;
-    };
+    }, []);
 
     // ===================================================================
     // 1. Configuración de stream desde Firestore
@@ -153,10 +187,15 @@ export const AudioProvider = ({ children }) => {
     }, [programas, programaManual]);
 
     // ===================================================================
-    // Web Audio API — Visualizador con blindaje iOS
+    // Web Audio API — Visualizador con blindaje iOS / Android
     // ===================================================================
     const setupAudioContext = useCallback(() => {
         const audio = getAudio();
+        if (isLocalOrNative()) {
+            // Permitir la reproducción directa por los altavoces nativos de Android sin restricciones CORS
+            return;
+        }
+
         if (!audioContextRef.current) {
             try {
                 const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -564,15 +603,31 @@ export const AudioProvider = ({ children }) => {
     // Media Session API (Bloqueo de pantalla y notificaciones OS)
     // ===================================================================
     useEffect(() => {
+        // En Android nativo, el Foreground Service nativo gestiona MediaSessionCompat y la notificación.
+        // Omitimos navigator.mediaSession en WebView para que Chromium no cree una notificación duplicada con barra de progreso.
+        if (isAppNative()) {
+            if ('mediaSession' in navigator) {
+                try {
+                    navigator.mediaSession.metadata = null;
+                    navigator.mediaSession.playbackState = 'none';
+                } catch { /* silent */ }
+            }
+            return;
+        }
+
         if ('mediaSession' in navigator) {
+            const baseUrl = (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
+                ? 'https://ctnradio.vercel.app'
+                : (window.location.origin || 'https://ctnradio.vercel.app');
+
             if (isPlaying) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: programaEnVivo || 'CTN Radio en Vivo',
                     artist: 'CTN Radio 24/7 — De Guarambaré al Mundo',
                     album: 'Emisión en Vivo',
                     artwork: [
-                        { src: '/pwa-icon.png', sizes: '192x192', type: 'image/png' },
-                        { src: '/splash-icon.png', sizes: '512x512', type: 'image/png' }
+                        { src: `${baseUrl}/pwa-icon.png`, sizes: '192x192', type: 'image/png' },
+                        { src: `${baseUrl}/splash-icon.png`, sizes: '512x512', type: 'image/png' }
                     ]
                 });
                 navigator.mediaSession.playbackState = 'playing';
@@ -589,6 +644,70 @@ export const AudioProvider = ({ children }) => {
             }
         }
     }, [isPlaying, programaEnVivo, togglePlay]);
+
+    // ===================================================================
+    // Android Native Foreground Service & Widget Controls
+    // ===================================================================
+    useEffect(() => {
+        if (!isAppNative()) return;
+        const title = programaEnVivo || 'CTN Radio en Vivo';
+        const artist = 'CTN Radio 24/7 — De Guarambaré al Mundo';
+
+        // 1. Llamar al AndroidBridge directo de la WebView (100% garantizado)
+        try {
+            if (typeof window !== 'undefined' && window.AndroidBridge) {
+                if (isPlaying) {
+                    window.AndroidBridge.startAudio(title, artist, true);
+                } else {
+                    window.AndroidBridge.stopAudio();
+                }
+            }
+        } catch (e) {
+            console.error('AndroidBridge sync error:', e);
+        }
+
+        // 2. Llamar también vía Capacitor Plugin como respaldo
+        try {
+            if (isPlaying) {
+                BackgroundAudio.start({ title, artist, isPlaying: true }).catch(() => {});
+            } else {
+                BackgroundAudio.stop().catch(() => {});
+            }
+        } catch { /* silent */ }
+    }, [isPlaying, programaEnVivo]);
+
+    useEffect(() => {
+        const handleNativeToggle = (e) => {
+            const targetState = e?.detail?.isPlaying;
+            if (typeof targetState === 'boolean') {
+                if (targetState && !isPlaying) {
+                    togglePlay();
+                } else if (!targetState && isPlaying) {
+                    togglePlay();
+                }
+            } else {
+                togglePlay();
+            }
+        };
+
+        window.addEventListener('nativeAudioToggle', handleNativeToggle);
+        return () => window.removeEventListener('nativeAudioToggle', handleNativeToggle);
+    }, [isPlaying, togglePlay]);
+
+    useEffect(() => {
+        const handleNativeMute = (e) => {
+            const audio = getAudio();
+            const targetMuted = e?.detail?.isMuted;
+            if (typeof targetMuted === 'boolean') {
+                audio.muted = targetMuted;
+            } else {
+                audio.muted = !audio.muted;
+            }
+        };
+
+        window.addEventListener('nativeAudioMute', handleNativeMute);
+        return () => window.removeEventListener('nativeAudioMute', handleNativeMute);
+    }, [getAudio]);
 
     // Limpieza global al desmontar
     useEffect(() => {

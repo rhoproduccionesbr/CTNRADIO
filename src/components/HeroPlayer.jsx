@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAudio } from '../context/AudioContext';
+import { useAudio, isLocalOrNative } from '../context/AudioContext';
 import { useChat } from '../context/ChatContext';
 import { 
     Play, Pause, Loader2, MessageCircle, RadioTower, 
@@ -30,12 +30,31 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
     const [photoOpacity, setPhotoOpacity] = useState(1);
     const [copiedShare, setCopiedShare] = useState(false);
     const [prevVolume, setPrevVolume] = useState(0.8);
+    const [showVolumePopup, setShowVolumePopup] = useState(false);
+    const volumeRef = useRef(null);
+
+    useEffect(() => {
+        const handleOutsideClick = (e) => {
+            if (volumeRef.current && !volumeRef.current.contains(e.target)) {
+                setShowVolumePopup(false);
+            }
+        };
+        if (showVolumePopup) {
+            document.addEventListener('mousedown', handleOutsideClick);
+            document.addEventListener('touchstart', handleOutsideClick);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+            document.removeEventListener('touchstart', handleOutsideClick);
+        };
+    }, [showVolumePopup]);
 
     // Obtener cantidad de oyentes
     useEffect(() => {
         const fetchListeners = async () => {
             try {
-                const res = await fetch('/api/oyentes');
+                const url = isLocalOrNative() ? 'https://ctnradio.vercel.app/api/oyentes' : '/api/oyentes';
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     if (data?.listeners !== undefined) setListenersCount(data.listeners);
@@ -43,7 +62,7 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
             } catch { /* silent */ }
         };
         fetchListeners();
-        const interval = setInterval(fetchListeners, 30000);
+        const interval = setInterval(fetchListeners, 15000);
         return () => clearInterval(interval);
     }, []);
 
@@ -163,23 +182,33 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                                 transition={{ duration: 2, repeat: Infinity }}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide backdrop-blur-md border ${
                                     isPlaying 
-                                        ? 'bg-accent-red/20 text-accent-red border-accent-red/30 shadow-md shadow-accent-red/20' 
+                                        ? 'bg-accent-red/20 text-accent-red border-accent-red/40 shadow-lg shadow-accent-red/25' 
                                         : isBuffering 
                                             ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
                                             : 'bg-black/40 text-zinc-400 border-white/10'
                                 }`}
                             >
-                                <motion.span 
-                                    animate={isPlaying ? { scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] } : {}}
-                                    transition={{ duration: 1.4, repeat: Infinity }}
-                                    className={`w-2 h-2 rounded-full ${
+                                <span className="relative flex h-2.5 w-2.5">
+                                    {isPlaying && (
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-red opacity-75" />
+                                    )}
+                                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
                                         isPlaying ? 'bg-accent-red' : 
                                         isBuffering ? 'bg-amber-400 animate-pulse' : 'bg-zinc-500'
-                                    }`} 
-                                />
-                                <span className="uppercase text-[11px] font-black">
+                                    }`} />
+                                </span>
+                                
+                                <span className="uppercase text-[11px] font-black tracking-wider">
                                     {isBuffering ? 'Conectando...' : isPlaying ? 'Al Aire' : 'Señal Pausada'}
                                 </span>
+
+                                {isPlaying && (
+                                    <span className="flex items-end gap-[2px] h-3 ml-0.5" aria-hidden="true">
+                                        <span className="w-[2.5px] bg-accent-red rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-2.5" />
+                                        <span className="w-[2.5px] bg-accent-red rounded-full animate-[pulse_0.9s_ease-in-out_infinite_0.15s] h-3.5" />
+                                        <span className="w-[2.5px] bg-accent-red rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.3s] h-2" />
+                                    </span>
+                                )}
                             </motion.div>
 
                             <span className="hidden sm:inline-flex text-xs font-medium text-zinc-400 backdrop-blur-md bg-black/30 px-3 py-1.5 rounded-full border border-white/10">
@@ -189,13 +218,11 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
 
                         {/* Oyentes y Señal */}
                         <div className="flex items-center gap-2 pointer-events-auto">
-                            {listenersCount !== null && (
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200 backdrop-blur-md bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
-                                    <RadioTower className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                                    <span className="tabular-nums">{listenersCount}</span>
-                                    <span className="hidden md:inline text-zinc-400 font-normal">oyentes</span>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200 backdrop-blur-md bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+                                <RadioTower className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                                <span className="tabular-nums">{listenersCount ?? 1}</span>
+                                <span className="text-zinc-400 font-normal">oyentes</span>
+                            </div>
 
                             {isPlaying && (
                                 <div className="hidden sm:flex items-center gap-1 text-xs backdrop-blur-md bg-black/40 px-2.5 py-1.5 rounded-full border border-white/10 text-zinc-300">
@@ -223,9 +250,9 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                             <div className="relative shrink-0">
                                 {isPlaying && (
                                     <motion.div
-                                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                        className="absolute -inset-1 rounded-2xl bg-accent-red/30 blur-md pointer-events-none"
+                                        animate={{ scale: [1, 1.25, 1], opacity: [0.6, 0.1, 0.6] }}
+                                        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                                        className="absolute -inset-1.5 rounded-2xl bg-accent-red/35 blur-md pointer-events-none"
                                     />
                                 )}
                                 <motion.button
@@ -265,53 +292,89 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                             </div>
                         </div>
 
-                        {/* Derecha: Volumen + Temporizador + Acciones */}
-                        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 justify-end flex-wrap">
+                        {/* Derecha: Acciones organizadas en una sola línea */}
+                        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end">
                             
-                            {/* Slider de Volumen */}
-                            <div className="hidden sm:flex items-center gap-2 bg-[var(--card-border)]/50 px-3 py-2 rounded-2xl border border-[var(--card-border)]">
-                                <button 
-                                    onClick={toggleMute}
-                                    className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors p-1"
-                                    title={volume === 0 ? "Activar sonido" : "Silenciar"}
+                            {/* Botón Volumen Desplegable */}
+                            <div className="relative" ref={volumeRef}>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.94 }}
+                                    onClick={() => setShowVolumePopup(prev => !prev)}
+                                    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border text-xs font-bold transition-all ${
+                                        showVolumePopup || volume === 0
+                                            ? 'bg-accent-red/15 text-accent-red border-accent-red/30'
+                                            : 'bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border-[var(--card-border)]'
+                                    }`}
+                                    title="Ajustar volumen"
+                                    aria-label="Ajustar volumen"
                                 >
                                     {volume === 0 ? <VolumeX className="w-4 h-4 text-accent-red" /> : <Volume2 className="w-4 h-4" />}
-                                </button>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.02"
-                                    value={volume}
-                                    onChange={(e) => setVolume(parseFloat(e.target.value))}
-                                    className="w-20 accent-accent-red cursor-pointer h-1.5 rounded-lg bg-[var(--card-border)]"
-                                    aria-label="Control de volumen"
-                                />
-                                <span className="text-[11px] font-mono tabular-nums text-[var(--text-muted)] w-8 text-right">
-                                    {Math.round(volume * 100)}%
-                                </span>
+                                </motion.button>
+
+                                {/* Popover Desplegable de Volumen */}
+                                <AnimatePresence>
+                                    {showVolumePopup && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 p-3 rounded-2xl bg-[var(--surface)] backdrop-blur-2xl border border-[var(--card-border)] shadow-2xl flex flex-col items-center gap-2.5 w-44"
+                                        >
+                                            <div className="flex items-center justify-between w-full px-1">
+                                                <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Volumen</span>
+                                                <span className="text-xs font-mono font-bold text-accent-red tabular-nums">
+                                                    {Math.round(volume * 100)}%
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2 w-full">
+                                                <button 
+                                                    onClick={toggleMute}
+                                                    className="text-[var(--text-muted)] hover:text-accent-red p-1 transition-colors"
+                                                    title={volume === 0 ? "Activar sonido" : "Silenciar"}
+                                                >
+                                                    {volume === 0 ? <VolumeX className="w-4 h-4 text-accent-red" /> : <Volume2 className="w-4 h-4" />}
+                                                </button>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="1"
+                                                    step="0.02"
+                                                    value={volume}
+                                                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                                                    className="w-full accent-accent-red cursor-pointer h-2 rounded-lg bg-[var(--card-border)]"
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
-                            {/* Botón Sleep Timer (Temporizador / Cronómetro de Apagado) */}
+                            {/* Botón Sleep Timer */}
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={() => setIsSleepModalOpen(true)}
-                                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                                className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border text-xs font-bold transition-all relative ${
                                     sleepTimerMinutes !== null
                                         ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/30'
                                         : 'bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border-[var(--card-border)]'
                                 }`}
-                                title="Temporizador de apagado automático"
+                                title={sleepTimerMinutes !== null ? `Apagado en ${Math.ceil(sleepRemainingSeconds / 60)} min` : "Temporizador de apagado"}
+                                aria-label="Temporizador de apagado"
                             >
                                 {sleepTimerMinutes !== null ? (
-                                    <Hourglass className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-pulse" />
+                                    <>
+                                        <Hourglass className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-pulse" />
+                                        <span className="absolute -top-1 -right-1 px-1 py-0.2 text-[8px] font-bold bg-amber-500 text-black rounded-full font-mono">
+                                            {Math.ceil(sleepRemainingSeconds / 60)}m
+                                        </span>
+                                    </>
                                 ) : (
                                     <Timer className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                                 )}
-                                <span className="hidden sm:inline">
-                                    {sleepTimerMinutes !== null ? `${Math.ceil(sleepRemainingSeconds / 60)}m` : 'Temporizador'}
-                                </span>
                             </motion.button>
 
                             {/* Botón WhatsApp Cabina */}
@@ -321,11 +384,11 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                                 href={`https://wa.me/${whatsappNum}?text=Hola%20CTN%20Radio,%20los%20estoy%20escuchando%20en%20vivo!`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold transition-all"
-                                title="Enviar mensaje al estudio"
+                                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold transition-all"
+                                title="Enviar mensaje al estudio por WhatsApp"
+                                aria-label="WhatsApp cabina"
                             >
                                 <MessageCircle className="w-4 h-4" />
-                                <span className="hidden sm:inline">WhatsApp</span>
                             </motion.a>
 
                             {/* Botón Modo Pantalla Completa / Cabina */}
@@ -333,11 +396,11 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={() => setIsAmbientOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border border-[var(--card-border)] text-xs font-bold transition-all"
+                                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border border-[var(--card-border)] text-xs font-bold transition-all"
                                 title="Pantalla Completa / Modo Estudio"
+                                aria-label="Modo Pantalla Completa"
                             >
                                 <Maximize2 className="w-4 h-4 text-accent-red" />
-                                <span className="hidden sm:inline">Pantalla</span>
                             </motion.button>
 
                             {/* Botón Compartir */}
@@ -345,11 +408,11 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={handleShare}
-                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border border-[var(--card-border)] text-xs font-bold transition-all"
+                                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center bg-[var(--card-border)]/60 hover:bg-[var(--card-border)] text-[var(--text-main)] border border-[var(--card-border)] text-xs font-bold transition-all"
                                 title="Compartir estación"
+                                aria-label="Compartir estación"
                             >
                                 {copiedShare ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
-                                <span className="hidden sm:inline">{copiedShare ? 'Copiado' : 'Compartir'}</span>
                             </motion.button>
 
                             {/* Botón Chat Modal */}
@@ -357,7 +420,9 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.94 }}
                                 onClick={() => setIsChatOpen(true)}
-                                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-accent-red hover:bg-[#c92a35] text-white text-xs font-bold transition-all shadow-md shadow-accent-red/20 relative"
+                                className="h-9 sm:h-11 px-3 sm:px-4 rounded-xl flex items-center gap-1.5 bg-accent-red hover:bg-[#c92a35] text-white text-xs font-bold transition-all shadow-md shadow-accent-red/20 relative shrink-0"
+                                title="Abrir Chat de la Radio"
+                                aria-label="Abrir Chat de la Radio"
                             >
                                 <MessageCircle className="w-4 h-4" />
                                 <span>Chat</span>

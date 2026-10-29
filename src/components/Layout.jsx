@@ -4,11 +4,11 @@ import PWAInstallPrompt from './PWAInstallPrompt';
 
 const Layout = () => {
     return (
-        <div className="min-h-screen flex flex-col pb-16 md:pb-0">
+        <div className="min-h-screen flex flex-col pb-24 md:pb-0">
             <PWAInstallPrompt />
             <Navbar />
 
-            <main className="flex-grow pt-16">
+            <main className="flex-grow pt-14 sm:pt-16">
                 <Outlet />
             </main>
         </div>

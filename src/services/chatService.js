@@ -34,8 +34,12 @@ class ChatService {
     this.intentionalClose = false;
     console.log('[ChatService] Conectando vía Vercel Proxy...');
 
+    const isCapacitor = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:');
+    const serverUrl = isCapacitor ? 'https://ctnradio.vercel.app' : undefined;
+
     // Usar la ruta proxy configurada en vercel.json y vite.config.js
-    this.socket = io({
+    this.socket = io(serverUrl, {
       path: '/socket.io/',
       // Forzar polling para evadir bloqueos de WebSocket puro sobre Edge
       transports: ['polling', 'websocket'],

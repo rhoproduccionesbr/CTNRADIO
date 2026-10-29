@@ -63,7 +63,10 @@ const StudioAmbientMode = ({ isOpen, onClose, contacto: _contacto }) => {
     if (!isOpen) return;
     const fetchListeners = async () => {
       try {
-        const res = await fetch('/api/oyentes');
+        const isCapacitor = typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:');
+        const url = isCapacitor ? 'https://ctnradio.vercel.app/api/oyentes' : '/api/oyentes';
+        const res = await fetch(url);
         if (res.ok) {
           const d = await res.json();
           if (d.listeners !== undefined) setListeners(d.listeners);
@@ -71,7 +74,7 @@ const StudioAmbientMode = ({ isOpen, onClose, contacto: _contacto }) => {
       } catch { /* silent */ }
     };
     fetchListeners();
-    const interval = setInterval(fetchListeners, 25000);
+    const interval = setInterval(fetchListeners, 15000);
     return () => clearInterval(interval);
   }, [isOpen]);
 
