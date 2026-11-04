@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Radio, Info, Image, Newspaper, Calendar, Menu, X, Maximize2, ShieldCheck } from 'lucide-react';
+import { Sun, Moon, Radio, Info, Image, Newspaper, Calendar, Menu, X, Maximize2, ShieldCheck, Mail, Phone, Globe, ExternalLink } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import StudioAmbientMode from './StudioAmbientMode';
 
@@ -128,7 +128,7 @@ const Navbar = () => {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                            className="fixed top-0 right-0 bottom-0 w-72 max-w-[85vw] bg-[var(--surface)] backdrop-blur-2xl border-l border-[var(--card-border)] z-[100] flex flex-col justify-between p-6 shadow-2xl"
+                            className="fixed top-0 right-0 bottom-0 w-80 max-w-[88vw] bg-[var(--surface)] backdrop-blur-2xl border-l border-[var(--card-border)] z-[100] flex flex-col justify-between p-5 sm:p-6 shadow-2xl overflow-y-auto"
                         >
                             {/* Parte Superior: Encabezado del menú y enlaces */}
                             <div>
@@ -197,45 +197,107 @@ const Navbar = () => {
                                 </nav>
                             </div>
 
-                            {/* Abajo de todo: Selector de Modo Oscuro o Claro */}
-                            <div className="pt-5 border-t border-[var(--card-border)] flex flex-col gap-2">
+                            {/* Abajo de todo: Selector de Modo Oscuro o Claro & Créditos RHO Producciones */}
+                            <div className="pt-4 mt-4 border-t border-[var(--card-border)] flex flex-col gap-3">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-1">
                                     Apariencia
                                 </span>
                                 <button
                                     onClick={toggleTheme}
-                                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[var(--card-border)]/40 hover:bg-[var(--card-border)]/70 text-[var(--text-main)] transition-all border border-[var(--card-border)] active:scale-98 cursor-pointer"
+                                    className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[var(--card-border)]/40 hover:bg-[var(--card-border)]/70 text-[var(--text-main)] transition-all border border-[var(--card-border)] active:scale-98 cursor-pointer"
                                     aria-label="Alternar tema claro y oscuro"
                                 >
                                     <div className="flex items-center gap-3">
                                         {theme === 'dark' ? (
-                                            <div className="w-8 h-8 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400">
-                                                <Sun className="w-4 h-4" />
+                                            <div className="w-7 h-7 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400">
+                                                <Sun className="w-3.5 h-3.5" />
                                             </div>
                                         ) : (
-                                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                                                <Moon className="w-4 h-4" />
+                                            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                                <Moon className="w-3.5 h-3.5" />
                                             </div>
                                         )}
                                         <div className="text-left">
                                             <div className="text-xs font-bold">
                                                 {theme === 'dark' ? 'Modo Oscuro' : 'Modo Claro'}
                                             </div>
-                                            <div className="text-[10px] text-[var(--text-muted)]">
+                                            <div className="text-[9px] text-[var(--text-muted)]">
                                                 {theme === 'dark' ? 'Activar tema claro' : 'Activar tema oscuro'}
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Switch Toggle */}
-                                    <div className={`w-10 h-5 rounded-full p-0.5 transition-colors ${
+                                    <div className={`w-9 h-4.5 rounded-full p-0.5 transition-colors ${
                                         theme === 'dark' ? 'bg-accent-red' : 'bg-zinc-300 dark:bg-zinc-700'
                                     }`}>
-                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
-                                            theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
+                                        <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                                            theme === 'dark' ? 'translate-x-4.5' : 'translate-x-0'
                                         }`} />
                                     </div>
                                 </button>
+
+                                {/* Bloque Estético de Autoría: RHO Producciones */}
+                                <div className="rounded-2xl p-3 bg-gradient-to-br from-[var(--card-border)]/50 via-[var(--card-border)]/30 to-transparent border border-[var(--card-border)] flex flex-col items-center text-center">
+                                    <a
+                                        href="https://rhoproducciones.vercel.app"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group flex flex-col items-center transition-transform hover:scale-102 active:scale-98 mb-2"
+                                        title="Visitar sitio de RHO Producciones"
+                                    >
+                                        <div className="h-9 flex items-center justify-center overflow-hidden mb-1">
+                                            <img
+                                                src="/rho-logo.png"
+                                                alt="RHO Producciones Logo"
+                                                className="max-h-8 w-auto object-contain drop-shadow-md group-hover:brightness-110 transition-all"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] uppercase font-bold tracking-wider text-amber-500 group-hover:text-amber-400 transition-colors flex items-center gap-1">
+                                            Desarrollado por RHO Producciones
+                                            <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                                        </span>
+                                    </a>
+
+                                    {/* Canales de Contacto Directo */}
+                                    <div className="w-full grid grid-cols-3 gap-1.5 pt-2 border-t border-[var(--card-border)]/60 text-[9px]">
+                                        <a
+                                            href="mailto:rhoproducciones@gmail.com"
+                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-accent-red transition-all"
+                                            title="Enviar correo a rhoproducciones@gmail.com"
+                                        >
+                                            <Mail className="w-3 h-3 text-red-500 shrink-0" />
+                                            <span className="truncate max-w-[65px] font-medium">Correo</span>
+                                        </a>
+
+                                        <a
+                                            href="https://wa.me/595976778593?text=Hola%20RHO%20Producciones"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-emerald-500 transition-all"
+                                            title="WhatsApp: 0976 778 593"
+                                        >
+                                            <Phone className="w-3 h-3 text-emerald-500 shrink-0" />
+                                            <span className="truncate max-w-[65px] font-medium">WhatsApp</span>
+                                        </a>
+
+                                        <a
+                                            href="https://rhoproducciones.vercel.app"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-sky-400 transition-all"
+                                            title="Sitio web: rhoproducciones.vercel.app"
+                                        >
+                                            <Globe className="w-3 h-3 text-sky-400 shrink-0" />
+                                            <span className="truncate max-w-[65px] font-medium">Web</span>
+                                        </a>
+                                    </div>
+
+                                    {/* Copyright / Derechos Reservados */}
+                                    <div className="mt-2 text-[8.5px] text-[var(--text-muted)] font-medium">
+                                        © {new Date().getFullYear()} RHO Producciones. Todos los derechos reservados.
+                                    </div>
+                                </div>
                             </div>
                         </motion.aside>
                     </>
