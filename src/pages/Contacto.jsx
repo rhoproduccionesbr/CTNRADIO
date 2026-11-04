@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { 
-  MapPin, Phone, Mail, Clock, Send, Radio, Target, 
-  Loader2, MessageCircle, ExternalLink, Check, Heart 
+import {
+    MapPin, Phone, Mail, Clock, Send, Radio, Target,
+    Loader2, MessageCircle, ExternalLink, Check, Heart
 } from 'lucide-react';
 
 const Contacto = () => {
@@ -39,7 +39,7 @@ const Contacto = () => {
         e.preventDefault();
         // Generar enlace directo a WhatsApp con el mensaje pre-cargado
         const texto = `Hola CTN Radio, mi nombre es ${formData.nombre} (${formData.email}): ${formData.mensaje}`;
-        const url = `https://wa.me/595981000000?text=${encodeURIComponent(texto)}`;
+        const url = `https://wa.me/595981687708?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
         setSentStatus(true);
         setTimeout(() => setSentStatus(false), 5000);
@@ -57,7 +57,7 @@ const Contacto = () => {
 
     return (
         <div className="min-h-screen pt-24 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-            
+
             {/* Header Editorial */}
             <div className="mb-14">
                 <span className="text-xs font-bold uppercase tracking-wider text-accent-red block mb-2">
@@ -75,17 +75,17 @@ const Contacto = () => {
 
             {/* SECCIÓN 1: Perfil de Clemente Torales & Misión / Visión */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
-                
+
                 {/* Tarjeta de Dirección General (5 cols) */}
                 <div className="lg:col-span-5 glass-card rounded-3xl p-8 border border-[var(--card-border)] flex flex-col items-center text-center">
                     <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-accent-red/30 shadow-xl mb-5 bg-zinc-950">
-                        <img 
-                            src={instData.fotoUrl || "https://ui-avatars.com/api/?name=Clemente+Torales&background=E63946&color=fff&size=512"} 
-                            alt="Prof. Clemente Torales" 
+                        <img
+                            src={instData.fotoUrl || "https://ui-avatars.com/api/?name=Clemente+Torales&background=E63946&color=fff&size=512"}
+                            alt="Prof. Clemente Torales"
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    
+
                     <span className="text-[11px] font-bold uppercase tracking-wider text-accent-red mb-1">
                         Dirección General & Locución
                     </span>
@@ -143,10 +143,10 @@ const Contacto = () => {
 
             {/* SECCIÓN 2: Canales de Contacto Directo */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-                
+
                 {/* WhatsApp */}
                 <a
-                    href="https://wa.me/595981000000?text=Hola%20CTN%20Radio"
+                    href="https://wa.me/595981687708?text=Hola%20CTN%20Radio"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="glass-card rounded-3xl p-6 border border-[var(--card-border)] hover:border-emerald-500/40 transition-all group flex flex-col justify-between"
@@ -165,14 +165,14 @@ const Contacto = () => {
                             WhatsApp Estudio
                         </h4>
                         <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-                            +595 981 000 000
+                            +595 981 687 708
                         </p>
                     </div>
                 </a>
 
                 {/* Email */}
                 <a
-                    href="mailto:rhoproducciones@gmail.com"
+                    href="mailto:ctnradiopy@gmail.com"
                     className="glass-card rounded-3xl p-6 border border-[var(--card-border)] hover:border-accent-red/40 transition-all group flex flex-col justify-between"
                 >
                     <div className="flex items-center justify-between mb-4">
@@ -189,7 +189,7 @@ const Contacto = () => {
                             Correo Electrónico
                         </h4>
                         <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-                            rhoproducciones@gmail.com
+                            ctnradiopy@gmail.com
                         </p>
                     </div>
                 </a>

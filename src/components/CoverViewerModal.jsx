@@ -42,7 +42,7 @@ const CoverViewerModal = ({ isOpen, onClose, photo, programaEnVivo, contacto }) 
     }
   };
 
-  const whatsappNum = contacto?.whatsapp?.replace(/[^0-9]/g, '') || '595981000000';
+  const whatsappNum = contacto?.whatsapp?.replace(/[^0-9]/g, '') || '595981687708';
   const dateFormatted = photo?.createdAt?.toDate 
     ? photo.createdAt.toDate().toLocaleDateString('es-PY', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'Reciente';

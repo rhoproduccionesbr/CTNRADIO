@@ -68,7 +68,7 @@ public class BackgroundAudioService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null)
-            return START_STICKY;
+            return START_NOT_STICKY;
 
         String action = intent.getAction();
         if (action == null)
@@ -147,7 +147,7 @@ public class BackgroundAudioService extends Service {
                 break;
         }
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void createNotificationChannel() {
@@ -285,21 +285,14 @@ public class BackgroundAudioService extends Service {
                 this, 1, playPauseIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // 2. Mute action
-        Intent muteIntent = new Intent(this, BackgroundAudioService.class);
-        muteIntent.setAction(ACTION_MUTE);
-        PendingIntent mutePending = PendingIntent.getService(
-                this, 2, muteIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        // 3. Share action
+        // 2. Share action
         Intent shareIntent = new Intent(this, BackgroundAudioService.class);
         shareIntent.setAction(ACTION_SHARE);
         PendingIntent sharePending = PendingIntent.getService(
                 this, 3, shareIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // 4. Stop action
+        // 3. Stop action (dismiss / close)
         Intent stopIntent = new Intent(this, BackgroundAudioService.class);
         stopIntent.setAction(ACTION_STOP);
         PendingIntent stopPending = PendingIntent.getService(
@@ -313,35 +306,28 @@ public class BackgroundAudioService extends Service {
                 .setLargeIcon(largeIcon)
                 .setContentTitle(currentTitle)
                 .setContentText(currentArtist)
-                .setSubText("CTN Radio")
                 .setContentIntent(openPendingIntent)
+                .setDeleteIntent(stopPending) // Limpia el servicio si se desliza la notificación
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(isPlaying)
                 .setShowWhen(false)
-                .setColor(Color.parseColor("#1E3A8A")) // Acento azul marino oscuro
+                .setColor(Color.parseColor("#1E3A8A"))
                 .setColorized(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setStyle(new MediaStyle()
                         .setMediaSession(mediaSession.getSessionToken())
-                        .setShowActionsInCompactView(0, 1, 2) // Play/Pause, Mute y Compartir en vista compacta/pantalla
-                                                              // de bloqueo
+                        .setShowActionsInCompactView(0, 1) // Play/Pause y Compartir en vista compacta
+                        .setShowCancelButton(true)
+                        .setCancelButtonIntent(stopPending)
                 )
                 .addAction(
                         isPlaying ? R.drawable.ic_pause : R.drawable.ic_play,
                         isPlaying ? "Pausar" : "Reproducir",
                         playPausePending)
                 .addAction(
-                        isMuted ? R.drawable.ic_volume_off : R.drawable.ic_volume_up,
-                        isMuted ? "Desmutear" : "Silenciar",
-                        mutePending)
-                .addAction(
                         R.drawable.ic_share,
                         "Compartir",
-                        sharePending)
-                .addAction(
-                        R.drawable.ic_stop,
-                        "Detener",
-                        stopPending);
+                        sharePending);
 
         return builder.build();
     }
@@ -368,6 +354,25 @@ public class BackgroundAudioService extends Service {
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
+        // Asegurar que la notificación se elimine completamente
+        stopForeground(true);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) {
+            nm.cancel(NOTIFICATION_ID);
+        }
         super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Cuando el usuario cierra la app desde recientes, limpiar todo
+        isPlaying = false;
+        stopForeground(true);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) {
+            nm.cancel(NOTIFICATION_ID);
+        }
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
     }
 }

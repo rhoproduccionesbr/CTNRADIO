@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, onSnapshot } from 'firebase/firestore';
-import { 
-  Calendar as CalendarIcon, Clock, User, Loader2, Radio, 
-  Play, Pause, X, MessageCircle, ExternalLink, ChevronRight, Check 
+import {
+    Calendar as CalendarIcon, Clock, User, Loader2, Radio,
+    Play, Pause, X, MessageCircle, ExternalLink, ChevronRight, Check
 } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 
@@ -70,7 +70,7 @@ const ProgramacionGrid = () => {
 
     return (
         <div className="min-h-screen pt-24 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-            
+
             {/* Header Editorial con la estética de estudio */}
             <div className="mb-12">
                 <span className="text-xs font-bold uppercase tracking-wider text-accent-red block mb-2">
@@ -95,11 +95,10 @@ const ProgramacionGrid = () => {
                                 <button
                                     key={dia}
                                     onClick={() => setSelectedDia(dia)}
-                                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
-                                        isActive
-                                            ? 'bg-accent-red text-white shadow-sm shadow-accent-red/30'
-                                            : 'bg-[var(--card-border)]/50 hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                                    }`}
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${isActive
+                                        ? 'bg-accent-red text-white shadow-sm shadow-accent-red/30'
+                                        : 'bg-[var(--card-border)]/50 hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                                        }`}
                                 >
                                     {isHoyTab ? `Hoy (${DIAS_CORTOS[hoyNombre]})` : dia}
                                 </button>
@@ -134,20 +133,17 @@ const ProgramacionGrid = () => {
                         const esHoy = DIAS_MAPPING[dia] === hoyIndex;
 
                         return (
-                            <div 
-                                key={dia} 
-                                className={`glass-card rounded-3xl overflow-hidden border border-[var(--card-border)] transition-all ${
-                                    esHoy ? 'ring-1 ring-accent-red/30' : ''
-                                }`}
+                            <div
+                                key={dia}
+                                className={`glass-card rounded-3xl overflow-hidden border border-[var(--card-border)] transition-all ${esHoy ? 'ring-1 ring-accent-red/30' : ''
+                                    }`}
                             >
                                 {/* Header del Día */}
-                                <div className={`px-6 py-4 flex items-center justify-between border-b border-[var(--card-border)] ${
-                                    esHoy ? 'bg-accent-red/5' : 'bg-[var(--surface)]'
-                                }`}>
+                                <div className={`px-6 py-4 flex items-center justify-between border-b border-[var(--card-border)] ${esHoy ? 'bg-accent-red/5' : 'bg-[var(--surface)]'
+                                    }`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black ${
-                                            esHoy ? 'bg-accent-red text-white' : 'bg-[var(--card-border)] text-[var(--text-muted)]'
-                                        }`}>
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black ${esHoy ? 'bg-accent-red text-white' : 'bg-[var(--card-border)] text-[var(--text-muted)]'
+                                            }`}>
                                             {DIAS_CORTOS[dia]}
                                         </div>
                                         <div>
@@ -238,11 +234,11 @@ const ProgramacionGrid = () => {
 
             {/* FICHA MODAL DEL PROGRAMA Y LOCUTOR */}
             {selectedPrograma && (
-                <div 
+                <div
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
                     onClick={() => setSelectedPrograma(null)}
                 >
-                    <div 
+                    <div
                         className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-[var(--card-border)] relative shadow-2xl animate-scale-in"
                         onClick={e => e.stopPropagation()}
                     >
@@ -292,8 +288,8 @@ const ProgramacionGrid = () => {
                                 Acerca de este programa
                             </h5>
                             <p className="text-sm text-[var(--text-main)] leading-relaxed">
-                                {selectedPrograma.descripcion || 
-                                 'Espacio radial transmitido en vivo con las mejores selecciones musicales, novedades de la comunidad, entrevistas y participación directa de los oyentes a través de WhatsApp y el chat digital.'}
+                                {selectedPrograma.descripcion ||
+                                    'Espacio radial transmitido en vivo con las mejores selecciones musicales, novedades de la comunidad, entrevistas y participación directa de los oyentes a través de WhatsApp y el chat digital.'}
                             </p>
                         </div>
 
@@ -311,7 +307,7 @@ const ProgramacionGrid = () => {
                             </button>
 
                             <a
-                                href="https://wa.me/595981000000?text=Hola,%20quisiera%20enviar%20un%20saludo%20para%20el%20programa."
+                                href="https://wa.me/595981687708?text=Hola,%20quisiera%20enviar%20un%20saludo%20para%20el%20programa."
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-3 rounded-xl bg-[var(--card-border)] hover:bg-[var(--card-border)]/80 text-[var(--text-main)] border border-[var(--card-border)] flex items-center justify-center transition-colors"

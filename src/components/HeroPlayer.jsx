@@ -111,7 +111,7 @@ const HeroPlayer = ({ contacto, galeria = [] }) => {
     const currentPhoto = galeria.length > 0 ? galeria[currentPhotoIndex] : null;
     const isDisabled = isLoading;
     const showBuffering = isBuffering && !isLoading;
-    const whatsappNum = contacto?.whatsapp?.replace(/[^0-9]/g, '') || '595981000000';
+    const whatsappNum = contacto?.whatsapp?.replace(/[^0-9]/g, '') || '595981687708';
 
     return (
         <div className="w-full">

@@ -147,6 +147,14 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        // Detener el servicio de audio y limpiar la notificación al cerrar la app
+        try {
+            Intent stopIntent = new Intent(this, BackgroundAudioService.class);
+            stopIntent.setAction(BackgroundAudioService.ACTION_STOP);
+            startService(stopIntent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if (instance == this) {
             instance = null;
         }
