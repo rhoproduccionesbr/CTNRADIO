@@ -237,66 +237,68 @@ const Navbar = () => {
                                     </div>
                                 </button>
 
-                                {/* Bloque Estético de Autoría: RHO Producciones */}
-                                <div className="rounded-2xl p-3 bg-gradient-to-br from-[var(--card-border)]/50 via-[var(--card-border)]/30 to-transparent border border-[var(--card-border)] flex flex-col items-center text-center">
+                                {/* Bloque Estético y Minimalista de Autoría: RHO Producciones */}
+                                <div className="rounded-xl px-2.5 py-2 bg-[var(--card-border)]/25 hover:bg-[var(--card-border)]/40 border border-[var(--card-border)]/70 flex flex-col items-center transition-colors">
                                     <a
                                         href="https://rhoproducciones.vercel.app"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group flex flex-col items-center transition-transform hover:scale-102 active:scale-98 mb-2"
+                                        className="group flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] active:scale-98"
                                         title="Visitar sitio de RHO Producciones"
                                     >
-                                        <div className="h-9 flex items-center justify-center overflow-hidden mb-1">
-                                            <img
-                                                src="/rho-logo.png"
-                                                alt="RHO Producciones Logo"
-                                                className="max-h-8 w-auto object-contain drop-shadow-md group-hover:brightness-110 transition-all"
-                                            />
+                                        <img
+                                            src="/rho-logo.png"
+                                            alt="RHO Producciones"
+                                            className="h-5 w-auto object-contain drop-shadow-sm group-hover:brightness-110 transition-all"
+                                        />
+                                        <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-main)] group-hover:text-amber-500 transition-colors">
+                                            <span>Desarrollado por RHO Producciones</span>
+                                            <ExternalLink className="w-2.5 h-2.5 opacity-60 text-amber-500" />
                                         </div>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider text-amber-500 group-hover:text-amber-400 transition-colors flex items-center gap-1">
-                                            Desarrollado por RHO Producciones
-                                            <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-                                        </span>
                                     </a>
 
-                                    {/* Canales de Contacto Directo */}
-                                    <div className="w-full grid grid-cols-3 gap-1.5 pt-2 border-t border-[var(--card-border)]/60 text-[9px]">
+                                    {/* Canales de Contacto Directo en barra compacta */}
+                                    <div className="w-full flex items-center justify-center gap-2 mt-1.5 pt-1.5 border-t border-[var(--card-border)]/50 text-[10px]">
                                         <a
                                             href="mailto:rhoproducciones@gmail.com"
-                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-accent-red transition-all"
-                                            title="Enviar correo a rhoproducciones@gmail.com"
+                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[var(--text-muted)] hover:text-red-500 hover:bg-[var(--card-border)]/40 transition-colors"
+                                            title="rhoproducciones@gmail.com"
                                         >
-                                            <Mail className="w-3 h-3 text-red-500 shrink-0" />
-                                            <span className="truncate max-w-[65px] font-medium">Correo</span>
+                                            <Mail className="w-2.5 h-2.5 text-red-500 shrink-0" />
+                                            <span>Correo</span>
                                         </a>
+
+                                        <span className="text-[var(--card-border)]">•</span>
 
                                         <a
                                             href="https://wa.me/595976778593?text=Hola%20RHO%20Producciones"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-emerald-500 transition-all"
+                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[var(--text-muted)] hover:text-emerald-500 hover:bg-[var(--card-border)]/40 transition-colors"
                                             title="WhatsApp: 0976 778 593"
                                         >
-                                            <Phone className="w-3 h-3 text-emerald-500 shrink-0" />
-                                            <span className="truncate max-w-[65px] font-medium">WhatsApp</span>
+                                            <Phone className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                                            <span>WhatsApp</span>
                                         </a>
+
+                                        <span className="text-[var(--card-border)]">•</span>
 
                                         <a
                                             href="https://rhoproducciones.vercel.app"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex flex-col items-center gap-1 p-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--card-border)] text-[var(--text-muted)] hover:text-sky-400 transition-all"
-                                            title="Sitio web: rhoproducciones.vercel.app"
+                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[var(--text-muted)] hover:text-sky-400 hover:bg-[var(--card-border)]/40 transition-colors"
+                                            title="rhoproducciones.vercel.app"
                                         >
-                                            <Globe className="w-3 h-3 text-sky-400 shrink-0" />
-                                            <span className="truncate max-w-[65px] font-medium">Web</span>
+                                            <Globe className="w-2.5 h-2.5 text-sky-400 shrink-0" />
+                                            <span>Web</span>
                                         </a>
                                     </div>
 
-                                    {/* Copyright / Derechos Reservados */}
-                                    <div className="mt-2 text-[8.5px] text-[var(--text-muted)] font-medium">
-                                        © {new Date().getFullYear()} RHO Producciones. Todos los derechos reservados.
-                                    </div>
+                                    {/* Copyright */}
+                                    <span className="text-[8.5px] text-[var(--text-muted)] mt-1 font-normal">
+                                        © {new Date().getFullYear()} RHO Producciones. Derechos reservados.
+                                    </span>
                                 </div>
                             </div>
                         </motion.aside>
