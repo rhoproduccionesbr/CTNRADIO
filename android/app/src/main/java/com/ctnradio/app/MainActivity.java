@@ -44,8 +44,8 @@ public class MainActivity extends BridgeActivity {
             WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(window, window.getDecorView());
             if (controller != null) {
-                controller.setAppearanceLightStatusBars(false); // Iconos claros para barra de estado
-                controller.setAppearanceLightNavigationBars(false); // Botones claros para barra de navegación
+                controller.setAppearanceLightStatusBars(false);
+                controller.setAppearanceLightNavigationBars(false);
             }
         }
 
@@ -123,8 +123,10 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> {
             try {
                 if (getBridge() != null && getBridge().getWebView() != null) {
+                    WebView wv = getBridge().getWebView();
+                    wv.onResume();
                     String js = "window.dispatchEvent(new CustomEvent('nativeAudioToggle', { detail: { isPlaying: " + isPlaying + " } }));";
-                    getBridge().getWebView().evaluateJavascript(js, null);
+                    wv.evaluateJavascript(js, null);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -136,8 +138,10 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> {
             try {
                 if (getBridge() != null && getBridge().getWebView() != null) {
+                    WebView wv = getBridge().getWebView();
+                    wv.onResume();
                     String js = "window.dispatchEvent(new CustomEvent('nativeAudioMute', { detail: { isMuted: " + isMuted + " } }));";
-                    getBridge().getWebView().evaluateJavascript(js, null);
+                    wv.evaluateJavascript(js, null);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -147,14 +151,6 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
-        // Detener el servicio de audio y limpiar la notificación al cerrar la app
-        try {
-            Intent stopIntent = new Intent(this, BackgroundAudioService.class);
-            stopIntent.setAction(BackgroundAudioService.ACTION_STOP);
-            startService(stopIntent);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         if (instance == this) {
             instance = null;
         }
